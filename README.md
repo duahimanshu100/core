@@ -1,2 +1,2 @@
-# cor
+# core
 core engine
