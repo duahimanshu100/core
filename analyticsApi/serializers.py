@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import SmAccount
 from .models import SmDataSource
-from .models import SmDataSourceFeature
 
 
 class SmAccountSerializer(serializers.ModelSerializer):
@@ -22,13 +21,3 @@ class SmDataSourceSerializer(serializers.ModelSerializer):
         model = SmDataSource
         fields = '__all__'
 
-
-class SmDataSourceFeatureSerializer(serializers.ModelSerializer):
-    '''
-        Serializer for SmAccount model
-    '''
-    data_source = SmDataSourceSerializer(read_only=True)
-
-    class Meta:
-        model = SmDataSourceFeature
-        fields = '__all__'

@@ -145,26 +145,7 @@ class ApiManagement(ApiSimplyMeasured):
                 temp_json['canonical_id'] = attributes.get(
                     'canonical_id')
                 # add feature
-                print('dsads')
-                feature = attributes.get('features', None)
-                temp_json['feature'] = {}
-                if feature:
-                    feature = feature[0]
-                    temp_json['feature'][
-                        'feature_type'] = feature.get('feature_type')
-                    temp_json['feature']['value'] = feature.get('value')
-                    temp_json['feature']['provider'] = feature.get('provider')
-                    temp_json['feature']['status'] = feature.get('status')
-                    temp_json['feature']['available_start_time'] = self.parse_date(
-                        attributes.get('available_start_time'), '%Y-%m-%dT%H:%M:%SZ')
-                    temp_json['feature']['available_end_time'] = self.parse_date(
-                        attributes.get('available_end_time'), '%Y-%m-%dT%H:%M:%SZ')
-                    temp_json['feature']['requested_start_time'] = self.parse_date(
-                        attributes.get('requested_start_time'), '%Y-%m-%dT%H:%M:%SZ')
-                    temp_json['feature']['created_at'] = self.parse_date(
-                        attributes.get('created_at'), '%Y-%m-%dT%H:%M:%SZ')
-                    temp_json['feature']['updated_at'] = self.parse_date(
-                        attributes.get('updated_at'), '%Y-%m-%dT%H:%M:%SZ')
+                temp_json['feature'] = attributes.get('features', None)
 
             lst_json.append(temp_json)
 
