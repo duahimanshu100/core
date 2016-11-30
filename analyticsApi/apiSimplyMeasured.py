@@ -1,6 +1,8 @@
 import requests
 import json
 from datetime import datetime
+from analyticsApi.models import SmAccount
+from analyticsApi.utility import Utility
 
 
 class ApiSimplyMeasured(object):
@@ -95,8 +97,75 @@ class ApiManagement(ApiSimplyMeasured):
         return lst_json
 
     def get_sm_data_sources(self, data_source_types='instagram_user'):
-        # TODO:Working on saving
+        '''
+        Get simply measured data sources for data sources
+        '''
+        # Fix the Comma Seperated String
+        resultSet = SmAccount.objects.all().values_list('sm_id', flat=True)
+        finalResult = Utility.list_to_comma_seperated_string(resultSet)
         self.url = self.url + 'data-sources'
-        self.payload['data_source_types'] = data_source_type
+        self.payload['data_source_types'] = data_source_types
+        self.payload['account_ids'] = finalResult
         result = self.parseJson(self.get().content)
-        return result
+        return self.get_sm_data_source_json(result)
+
+    def get_sm_data_source_json(self, results):
+        '''
+        Convert simply measured data sources to json array according to model
+        '''
+        lst_json = []
+        for result in results:
+            temp_json = {}
+            temp_json['ds_id'] = result.get('id', None)
+            attributes = result.get('attributes', None)
+            relationships = result.get('relationships', None)
+            relationships = relationships.get('account', None)
+            relationships = relationships.get('data', None)
+            accountId = relationships.get('id', None)
+            if attributes:
+                sm_account = SmAccount.objects.get(
+                    sm_id=accountId)
+                temp_json['sm_account'] = sm_account.id
+                temp_json['provided_name'] = attributes.get(
+                    'provided_name', None)
+                temp_json['status'] = attributes.get('status', '')
+                temp_json['created_at'] = self.parse_date(
+                    attributes.get('created_at'), '%Y-%m-%dT%H:%M:%SZ')
+                temp_json['updated_at'] = self.parse_date(
+                    attributes.get('updated_at'), '%Y-%m-%dT%H:%M:%SZ')
+                temp_json['provided_description'] = attributes.get(
+                    'provided_description', None)
+                temp_json['data_source_type'] = attributes.get(
+                    'data_source_type')
+                temp_json['value'] = attributes.get('value')
+                temp_json['sentiment_enabled'] = attributes.get(
+                    'sentiment_enabled')
+                temp_json['elevated_access'] = attributes.get(
+                    'elevated_access')
+                temp_json['canonical_id'] = attributes.get(
+                    'canonical_id')
+                # add feature
+                print('dsads')
+                feature = attributes.get('features', None)
+                temp_json['feature'] = {}
+                if feature:
+                    feature = feature[0]
+                    temp_json['feature'][
+                        'feature_type'] = feature.get('feature_type')
+                    temp_json['feature']['value'] = feature.get('value')
+                    temp_json['feature']['provider'] = feature.get('provider')
+                    temp_json['feature']['status'] = feature.get('status')
+                    temp_json['feature']['available_start_time'] = self.parse_date(
+                        attributes.get('available_start_time'), '%Y-%m-%dT%H:%M:%SZ')
+                    temp_json['feature']['available_end_time'] = self.parse_date(
+                        attributes.get('available_end_time'), '%Y-%m-%dT%H:%M:%SZ')
+                    temp_json['feature']['requested_start_time'] = self.parse_date(
+                        attributes.get('requested_start_time'), '%Y-%m-%dT%H:%M:%SZ')
+                    temp_json['feature']['created_at'] = self.parse_date(
+                        attributes.get('created_at'), '%Y-%m-%dT%H:%M:%SZ')
+                    temp_json['feature']['updated_at'] = self.parse_date(
+                        attributes.get('updated_at'), '%Y-%m-%dT%H:%M:%SZ')
+
+            lst_json.append(temp_json)
+
+        return lst_json
