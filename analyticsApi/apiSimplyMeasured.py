@@ -169,14 +169,27 @@ class ApiAnalytics(ApiSimplyMeasured):
         '''
         Get social profiles by simply measured
         '''
-        #TODO:get sm_account id_dynamic
-        sm_account_id = 'fd7a848a-bfa9-4c24-b9e7-b1049e2d136e'
+        lst_result = []
+        for account in SmAccount.objects.all():
+            lst_result = lst_result + \
+                self.get_profile_by_account(account, channel_type)
+        return lst_result
+
+    def get_profile_by_account(self, account,
+                               channel_type='instagram',
+                               profile_id=''):
+        sm_account_id = account.sm_id
         self.url = self.url + sm_account_id + '/profiles'
         self.payload['filter'] = 'channel.eq(' + channel_type + ')'
+        self.payload['limit'] = 10000
+        # TODO add paging
+        if profile_id:
+            # TODO self.payload['filter'] = 'channel.eq(' + channel_type + ')'
+            pass
         result = self.parseJson(self.get().content)
-        return self.get_profiles_json(result)
+        return self.get_profiles_json(result, account.id)
 
-    def get_profiles_json(self, results):
+    def get_profiles_json(self, results, account_id):
         '''
         Convert simply measured data sources to json array according to model
         '''
@@ -193,6 +206,7 @@ class ApiAnalytics(ApiSimplyMeasured):
                     'attributes']['fields'].pop('profile.handle')
                 result['attributes']['fields']['display_name'] = result[
                     'attributes']['fields'].pop('profile.display_name')
+                result['attributes']['fields']['sm_account'] = account_id
                 lst_json.append(result['attributes']['fields'])
             except KeyError:
                 pass

@@ -50,26 +50,14 @@ class Profile(models.Model):
     '''
     Simply Measured Profiles
     '''
-    FACEBOOK = 1
-    TWITTER = 2
-    INSTAGRAM = 3
-    PINTEREST = 4
-    YOUTUBE = 5
-    CHANNEL_CHOICES = (
-        (FACEBOOK, 'facebook'),
-        (TWITTER, 'twitter'),
-        (INSTAGRAM, 'instagram'),
-        (PINTEREST, 'pinterest'),
-        (YOUTUBE, 'youtube'),
-    )
     profile_id = models.BigIntegerField(unique=True)
     sm_account = models.ForeignKey(SmAccount)
     link = models.CharField(max_length=500)
     handle = models.CharField(max_length=200)
     display_name = models.CharField(max_length=200)
     audience_count = models.BigIntegerField(default=0)
-    channel_type = models.IntegerField(
-        choices=CHANNEL_CHOICES, default=INSTAGRAM)
+    channel_type = models.CharField(
+        max_length=200, default='instagram')
 
     def __str__(self):
-        return self.profile_id + ' - ' + self.link
+        return str(self.profile_id) + ' - ' + self.display_name
