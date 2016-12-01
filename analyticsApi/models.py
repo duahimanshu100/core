@@ -44,21 +44,3 @@ class SmDataSource(models.Model):
 
     def __str__(self):
         return self.ds_id + ' - ' + self.provided_name
-
-
-# class SmDataSourceFeature(models.Model):
-#     '''
-#     Simply Measured Data source Feature model
-#     '''
-#     feature_id = models.CharField(max_length=200, unique=True)
-#     sm_data_source = models.ForeignKey(SmDataSource)
-#     feature_type = models.CharField(max_length=200)
-#     value = models.CharField(max_length=200)
-#     provider = models.CharField(max_length=200)
-#     status = models.CharField(max_length=200)
-#     available_start_time = models.DateTimeField()
-#     available_end_time = models.DateTimeField()
-#     requested_start_time = models.DateTimeField()
-#     created_at = models.DateTimeField()
-#     updated_at = models.DateTimeField()
-#     metadata_list = JSONField()
