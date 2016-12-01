@@ -24,6 +24,14 @@ class ApiSimplyMeasured(object):
         '''
         return datetime.strptime(str_date, format)
 
+    def parseJson(self, data):
+        '''
+        Convert byte to json and return data key if exists
+        '''
+        data = data.decode("utf-8")
+        data = json.loads(data)
+        return data.get('data', {})
+
     def get(self):
         '''
             GET methods for all the apis
@@ -53,14 +61,6 @@ class ApiManagement(ApiSimplyMeasured):
         ApiSimplyMeasured.__init__(self)
         self.url = self.url + ApiManagement.BASE_URL
         self.headers['Authorization'] = "Bearer " + token
-
-    def parseJson(self, data):
-        '''
-        Convert byte to json and return data key if exists
-        '''
-        data = data.decode("utf-8")
-        data = json.loads(data)
-        return data.get('data', {})
 
     def get_sm_accounts(self, data_source_types='instagram_user'):
         '''
@@ -148,5 +148,53 @@ class ApiManagement(ApiSimplyMeasured):
                 temp_json['feature'] = attributes.get('features', None)
 
             lst_json.append(temp_json)
+
+        return lst_json
+
+
+class ApiAnalytics(ApiSimplyMeasured):
+    '''
+        Apis for simply measured account management
+    '''
+
+    # Base url
+    BASE_URL = 'v1/analytics/'
+
+    def __init__(self, token):
+        ApiSimplyMeasured.__init__(self)
+        self.url = self.url + ApiAnalytics.BASE_URL
+        self.headers['Authorization'] = "Bearer " + token
+
+    def get_profiles(self, channel_type='instagram'):
+        '''
+        Get social profiles by simply measured
+        '''
+        #TODO:get sm_account id_dynamic
+        sm_account_id = 'fd7a848a-bfa9-4c24-b9e7-b1049e2d136e'
+        self.url = self.url + sm_account_id + '/profiles'
+        self.payload['filter'] = 'channel.eq(' + channel_type + ')'
+        result = self.parseJson(self.get().content)
+        return self.get_profiles_json(result)
+
+    def get_profiles_json(self, results):
+        '''
+        Convert simply measured data sources to json array according to model
+        '''
+        lst_json = []
+        for result in results:
+            try:
+                result['attributes']['fields']['profile_id'] = int(result[
+                    'attributes']['fields'].pop('profile.id'))
+                result['attributes']['fields']['channel_type'] = result[
+                    'attributes']['fields'].pop('channel')
+                result['attributes']['fields']['link'] = result[
+                    'attributes']['fields'].pop('profile.link')
+                result['attributes']['fields']['handle'] = result[
+                    'attributes']['fields'].pop('profile.handle')
+                result['attributes']['fields']['display_name'] = result[
+                    'attributes']['fields'].pop('profile.display_name')
+                lst_json.append(result['attributes']['fields'])
+            except KeyError:
+                pass
 
         return lst_json
