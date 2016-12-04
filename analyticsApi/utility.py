@@ -1,3 +1,4 @@
+import json
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -16,7 +17,7 @@ class Utility:
         '''
         count_update = 0
         count_save = 0
-        lst_errors =[]
+        lst_errors = []
 
         for data in lst_data:
             try:
@@ -52,3 +53,12 @@ class Utility:
         convert list to comma seperated strings
         '''
         return ",".join(str(entity) for entity in list)
+
+    @staticmethod
+    def get_remaining_page_count(content):
+        try:
+            content = content.decode("utf-8")
+            content = json.loads(content)
+            return int(content['meta']['counts']['remaining'])
+        except KeyError:
+            return 0

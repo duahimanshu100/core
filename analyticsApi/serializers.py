@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import SmAccount
 from .models import SmDataSource
-from .models import Profile
+from .models import Profile, Post
 
 
 class SmAccountSerializer(serializers.ModelSerializer):
@@ -30,4 +30,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
+        fields = '__all__'
+
+
+class PostSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for SmAccount model
+    '''
+
+    class Meta:
+        model = Post
         fields = '__all__'

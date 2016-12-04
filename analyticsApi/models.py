@@ -61,3 +61,23 @@ class Profile(models.Model):
 
     def __str__(self):
         return str(self.profile_id) + ' - ' + self.display_name
+
+
+class Post(models.Model):
+    '''
+    Simply Measured Profiles
+    '''
+    post_id = models.CharField(unique=True, max_length=500)
+    profile_id = models.BigIntegerField(max_length=500)
+    created_at = models.DateTimeField()
+    body = models.TextField(null=True, blank=True)
+    content_type = models.CharField(max_length=1000)
+    engagement_total = models.BigIntegerField(default=0)
+    likes_count = models.BigIntegerField(default=0)
+    replies_count = models.BigIntegerField(default=0)
+    shares_count = models.BigIntegerField(default=0)
+    channel = models.CharField(
+        max_length=200, default='instagram')
+
+    def __str__(self):
+        return str(self.profile_id)
