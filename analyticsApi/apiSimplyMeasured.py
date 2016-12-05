@@ -220,8 +220,7 @@ class ApiAnalytics(ApiSimplyMeasured):
             self.url = self.url + str(profile.sm_account.sm_id) + '/posts'
 
         if query_params:
-            # ToDO check payload type merge if already exist
-            self.payload = query_params
+            self.payload = {**self.payload, **query_params}
         result = self.get_all(self.get_posts_by_profile_callback)
 
     def get_posts_by_profile_callback(self, data):
