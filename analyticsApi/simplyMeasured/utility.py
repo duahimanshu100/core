@@ -2,7 +2,7 @@ import json
 from django.core.exceptions import ObjectDoesNotExist
 
 
-class SMUtility:
+class SmUtility:
     '''
     Gernral Utility class for comman functions
     '''

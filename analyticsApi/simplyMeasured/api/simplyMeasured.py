@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from analyticsApi.models import SmAccount, Profile, Post
 from analyticsApi.utility import Utility
+from analyticsApi.ApiSimplyMeasured.utility import SmUtility
 from analyticsApi.serializers import ProfileSerializer, PostSerializer
 
 
@@ -55,7 +56,7 @@ class ApiSimplyMeasured(object):
             callback(result)
         count_hit = 1
         if result and result.content and \
-                Utility.get_remaining_page_count(result.content):
+                SmUtility.get_remaining_page_count(result.content):
             remaining = Utility.get_remaining_page_count(result.content)
             while(remaining):
                 count_hit = count_hit + 1

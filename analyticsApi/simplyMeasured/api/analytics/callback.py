@@ -1,4 +1,4 @@
-from analyticsApi.ApiSimplyMeasured.utility import SMUtility
+from analyticsApi.ApiSimplyMeasured.utility import SmUtility
 from analyticsApi.utility import Utility
 from analyticsApi.simplyMeasured.analytics.jsonParse import JsonAnalytics
 
