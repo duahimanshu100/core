@@ -37,13 +37,8 @@ class ApiAnalytics(ApiSimplyMeasured):
     #     for profile in Profile.objects.filter(sm_account=account):
     #         self.get_post_by_profile(profile, limit)
 
-    def get_posts_by_profile(self, profile,
-                             sm_account_id=None, query_params=None):
-        if sm_account_id:
-            self.url = self.url + str(sm_account_id) + '/posts'
-        else:
-            self.url = self.url + str(profile.sm_account.sm_id) + '/posts'
-
+    def get_posts(self, sm_account_id, query_params=None):
+        self.url = self.url + str(sm_account_id) + '/posts'
         if query_params:
             self.payload = {**self.payload, **query_params}
         result = self.get_all(JsonAnalytics.get_posts_by_profile_callback)

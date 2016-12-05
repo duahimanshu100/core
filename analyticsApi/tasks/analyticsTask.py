@@ -23,16 +23,34 @@ def syncProfiles():
 
 
 @shared_task
-def syncPosts():
+def syncAllProfilesPost():
     '''
     SyncPost will create or update the posts
     of simply measured  associated with the token and profiles
     '''
 
     for profile in Profile.objects.all():
-        params = {'filter': [
-            'post.creation_date.gte(2016-01-01)',
-            'author.id.eq(' + str(profile.profile_id) + ')']}
-        obj = ApiAnalytics(TOKEN)
-        print(params)
-        obj.get_posts_by_profile(profile, None, params)
+        syncProfilePosts(profile)
+
+
+def syncProfilePosts(profile):
+    '''
+    syncProfilePosts will create or update the posts
+    of simply measured  associated with the token and profile
+    '''
+    params = {'filter': [
+        'post.creation_date.gte(2016-01-01)',
+        'author.id.eq(' + str(profile.profile_id) + ')']}
+    obj = ApiAnalytics(TOKEN)
+    print(params)
+    obj.get_posts(profile.sm_account.sm_id, params)
+
+
+def syncSinglePost(post):
+    params = {'filter': [
+        'post.creation_date.gte(1970-01-01)',
+        'author.id.eq(' + str(post.profile_id) + ')',
+        'post.id.eq(' + post.post_id + ')'
+    ]}
+    obj = ApiAnalytics(TOKEN)
+    # obj.get_posts_by_profile(profile, None, params)
