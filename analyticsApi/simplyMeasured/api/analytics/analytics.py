@@ -70,30 +70,4 @@ class ApiAnalytics(ApiSimplyMeasured):
             # TODO self.payload['filter'] = 'channel.eq(' + channel_type + ')'
             pass
         result = self.parseJson(self.get().content)
-        return self.get_profiles_json(result, account.id)
-
-    def get_profiles_json(self, results, account_id):
-        '''
-        Convert simply measured data sources to json array according to model
-        '''
-        lst_json = []
-        for result in results:
-            try:
-                result['attributes']['fields']['profile_id'] = int(result[
-                    'attributes']['fields'].pop('profile.id'))
-                result['attributes']['fields']['channel_type'] = result[
-                    'attributes']['fields'].pop('channel')
-                result['attributes']['fields']['link'] = result[
-                    'attributes']['fields'].pop('profile.link')
-                result['attributes']['fields']['handle'] = result[
-                    'attributes']['fields'].pop('profile.handle')
-                result['attributes']['fields']['display_name'] = result[
-                    'attributes']['fields'].pop('profile.display_name')
-                result['attributes']['fields']['audience_count'] = result[
-                    'attributes']['metrics'].pop('profile.audience_count')
-                result['attributes']['fields']['sm_account'] = account_id
-                lst_json.append(result['attributes']['fields'])
-            except KeyError:
-                pass
-
-        return lst_json
+        return JsonAnalytics.get_profiles_json(result, account.id)

@@ -1,4 +1,5 @@
 class JsonAnalytics:
+
     @staticmethod
     def get_post_json(results):
         '''
@@ -29,6 +30,33 @@ class JsonAnalytics:
                 result['attributes']['fields'][
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
+                lst_json.append(result['attributes']['fields'])
+            except KeyError:
+                pass
+
+        return lst_json
+
+    @staticmethod
+    def get_profiles_json(results, account_id):
+        '''
+        Convert simply measured data sources to json array according to model
+        '''
+        lst_json = []
+        for result in results:
+            try:
+                result['attributes']['fields']['profile_id'] = int(result[
+                    'attributes']['fields'].pop('profile.id'))
+                result['attributes']['fields']['channel_type'] = result[
+                    'attributes']['fields'].pop('channel')
+                result['attributes']['fields']['link'] = result[
+                    'attributes']['fields'].pop('profile.link')
+                result['attributes']['fields']['handle'] = result[
+                    'attributes']['fields'].pop('profile.handle')
+                result['attributes']['fields']['display_name'] = result[
+                    'attributes']['fields'].pop('profile.display_name')
+                result['attributes']['fields']['audience_count'] = result[
+                    'attributes']['metrics'].pop('profile.audience_count')
+                result['attributes']['fields']['sm_account'] = account_id
                 lst_json.append(result['attributes']['fields'])
             except KeyError:
                 pass
