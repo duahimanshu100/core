@@ -5,6 +5,7 @@ from analyticsApi.models import SmAccount, Profile, Post
 from analyticsApi.utility import Utility
 from analyticsApi.serializers import ProfileSerializer, PostSerializer
 from analyticsApi.ApiSimplyMeasured.api.simplyMeasured import ApiSimplyMeasured
+from analyticsApi.ApiSimplyMeasured.api.simplyMeasured.api.analytics.jsonParse import JsonAnalytics
 
 
 class ApiAnalytics(ApiSimplyMeasured):
@@ -45,13 +46,7 @@ class ApiAnalytics(ApiSimplyMeasured):
 
         if query_params:
             self.payload = {**self.payload, **query_params}
-        result = self.get_all(self.get_posts_by_profile_callback)
-
-    def get_posts_by_profile_callback(self, data):
-        data = self.parseJson(data.content)
-        post_json = self.get_post_json(data)
-        print(Utility.save_and_update_data(
-            PostSerializer, post_json, Post, 'post_id', 'post_id'))
+        result = self.get_all(JsonAnalytics.get_posts_by_profile_callback)
 
     def get_profiles(self, channel_type='instagram'):
         '''
@@ -76,41 +71,6 @@ class ApiAnalytics(ApiSimplyMeasured):
             pass
         result = self.parseJson(self.get().content)
         return self.get_profiles_json(result, account.id)
-
-    def get_post_json(self, results):
-        '''
-        Convert simply measured data sources to json array according to model
-        '''
-        lst_json = []
-        for result in results:
-            try:
-                result['attributes']['fields']['channel'] = result[
-                    'attributes']['fields'].pop('channel')
-                result['attributes']['fields']['post_id'] = result[
-                    'attributes']['fields'].pop('post.id')
-                result['attributes']['fields']['profile_id'] = result[
-                    'attributes']['fields'].pop('author.id')
-                result['attributes']['fields']['body'] = result[
-                    'attributes']['fields'].pop('post.body')
-                result['attributes']['fields']['content_type'] = result[
-                    'attributes']['fields'].pop('post.primary_content_type')
-                result['attributes']['fields']['created_at'] = result[
-                    'attributes']['fields'].pop('post.creation_date')
-                metrics = result['attributes']['metrics']
-                result['attributes']['fields']['engagement_total'] = metrics[
-                    'post.engagement_total'] if metrics['post.engagement_total'] else 0
-                result['attributes']['fields']['likes_count'] = metrics[
-                    'post.likes_count'] if metrics['post.likes_count'] else 0
-                result['attributes']['fields'][
-                    'replies_count'] = metrics['post.replies_count'] if metrics['post.replies_count'] else 0
-                result['attributes']['fields'][
-                    'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
-
-                lst_json.append(result['attributes']['fields'])
-            except KeyError:
-                pass
-
-        return lst_json
 
     def get_profiles_json(self, results, account_id):
         '''

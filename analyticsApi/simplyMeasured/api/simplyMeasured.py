@@ -68,7 +68,7 @@ class ApiSimplyMeasured(object):
                     callback(result)
 
                 remaining = Utility.get_remaining_page_count(
-                    result.content)
+                    self.get_post_json(result.content))
         if callback:
             return count_hit
         return lst_result
