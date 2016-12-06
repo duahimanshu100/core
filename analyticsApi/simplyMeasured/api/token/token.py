@@ -1,7 +1,7 @@
 import requests
 import json
 from datetime import datetime
-from analyticsApi.models import SmAccount, Profile, Post, Token
+from analyticsApi.models import SmAccount, Profile, Post, SmToken
 from analyticsApi.utility import Utility
 from analyticsApi.serializers import ProfileSerializer, PostSerializer
 from analyticsApi.simplyMeasured.api.simplyMeasured import ApiSimplyMeasured
@@ -15,21 +15,23 @@ class ApiToken(ApiSimplyMeasured):
     # Base url
     BASE_URL = 'refresh-token'
 
-    def __init__(self, token):
+    def __init__(self):
         ApiSimplyMeasured.__init__(self)
         self.url = self.url + ApiToken.BASE_URL
-        self.headers['Content-Type'] = "application/x-www-form-urlencoded"
+        self.headers['content-type'] = "application/x-www-form-urlencoded"
 
-    def get_api_token(self):
-        token = Token.objects.filter()
-        refresh_token = token.refresh_token
-        sm_id = token.sm_id
+    def get_api_token(self, sm_id):
+        token = SmToken.objects.filter(sm_id=sm_id, token_type=1).first()
+        refresh_token = token.token
         params = {}
         params['account_id'] = sm_id
         params['refresh_token'] = refresh_token
         params['grant_type'] = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+        self.payload = params
         response = self.post()
+        import pdb
+        pdb.set_trace()
         if response:
             data = response.content.decode("utf-8")
             data = json.loads(data)
-                Token.objects.create(token_type=2, token=data['id_token'])
+            SmToken.objects.create(token_type=2, token=data['id_token'])

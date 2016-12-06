@@ -11,7 +11,7 @@ class SmToken(models.Model):
     TOKEN_CHOICES = (
         (1, "REFRESH"),
         (2, "API"))
-    token = models.CharField(max_length=200, unique=True)
+    token = models.CharField(max_length=1000, unique=True)
     token_type = models.IntegerField(choices=TOKEN_CHOICES, default=1)
     is_active = models.BooleanField(default=True)
     sm_id = models.CharField(max_length=200, null=True, blank=True)
@@ -19,7 +19,7 @@ class SmToken(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.token + ' - ' + self.token_type
+        return self.token + ' - ' + str(self.token_type)
 
 
 class SmAccount(models.Model):
