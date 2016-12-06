@@ -1,6 +1,6 @@
-from analyticsApi.ApiSimplyMeasured.utility import SmUtility
+from analyticsApi.simplyMeasured.utility import SmUtility
 from analyticsApi.utility import Utility
-from analyticsApi.simplyMeasured.analytics.jsonParse import JsonAnalytics
+from analyticsApi.simplyMeasured.api.analytics.jsonParse import JsonAnalytics
 
 
 class AnalyticsCallback:

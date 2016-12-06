@@ -1,10 +1,6 @@
 import requests
 import json
 from datetime import datetime
-from analyticsApi.models import SmAccount, Profile, Post
-from analyticsApi.utility import Utility
-from analyticsApi.simplyMeasured.utility import SmUtility
-from analyticsApi.serializers import ProfileSerializer, PostSerializer
 
 
 class ApiSimplyMeasured(object):
@@ -41,38 +37,6 @@ class ApiSimplyMeasured(object):
         return requests.get(self.url,
                             params=self.payload,
                             headers=self.headers)
-
-    def get_all(self, callback=None):
-        '''
-            GET methods for all pagging api the apis
-            deafult limit is of 1000
-            deafult max pagfing is 5
-        '''
-        result = self.get()
-        lst_result = []
-        if not callback:
-            lst_result.append(result)
-        else:
-            callback(result)
-        count_hit = 1
-        if result and result.content and \
-                SmUtility.get_remaining_page_count(result.content):
-            remaining = Utility.get_remaining_page_count(result.content)
-            while(remaining):
-                count_hit = count_hit + 1
-                self.payload['page'] = count_hit
-                result = self.get()
-
-                if not callback:
-                    lst_result.append(result)
-                else:
-                    callback(result)
-
-                remaining = Utility.get_remaining_page_count(
-                    self.get_post_json(result.content))
-        if callback:
-            return count_hit
-        return lst_result
 
     def post(self):
         '''

@@ -4,8 +4,9 @@ from datetime import datetime
 from analyticsApi.models import SmAccount, Profile, Post
 from analyticsApi.utility import Utility
 from analyticsApi.serializers import ProfileSerializer, PostSerializer
-from analyticsApi.ApiSimplyMeasured.api.simplyMeasured import ApiSimplyMeasured
-from analyticsApi.ApiSimplyMeasured.api.simplyMeasured.api.analytics.jsonParse import JsonAnalytics
+from analyticsApi.simplyMeasured.api.simplyMeasured import ApiSimplyMeasured
+from analyticsApi.simplyMeasured.api.analytics.jsonParse import JsonAnalytics
+from analyticsApi.simplyMeasured.api.analytics.callback import AnalyticsCallback
 
 
 class ApiAnalytics(ApiSimplyMeasured):
@@ -41,7 +42,7 @@ class ApiAnalytics(ApiSimplyMeasured):
         self.url = self.url + str(sm_account_id) + '/posts'
         if query_params:
             self.payload = {**self.payload, **query_params}
-        result = self.get_all(JsonAnalytics.get_posts_by_profile_callback)
+        result = self.get_all(AnalyticsCallback.get_posts_by_profile_callback)
 
     def get_profiles(self, channel_type='instagram'):
         '''

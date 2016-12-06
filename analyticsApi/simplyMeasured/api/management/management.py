@@ -4,7 +4,7 @@ from datetime import datetime
 from analyticsApi.models import SmAccount, Profile, Post
 from analyticsApi.utility import Utility
 from analyticsApi.serializers import ProfileSerializer, PostSerializer
-from analyticsApi.ApiSimplyMeasured.api.simplyMeasured import ApiSimplyMeasured
+from analyticsApi.simplyMeasured.api.simplyMeasured import ApiSimplyMeasured
 
 
 class ApiManagement(ApiSimplyMeasured):
