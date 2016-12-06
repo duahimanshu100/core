@@ -4,6 +4,24 @@ from django.contrib.postgres.fields import JSONField
 # Create your models here.
 
 
+class SmToken(models.Model):
+    '''
+    Simply Measured Token
+    '''
+    TOKEN_CHOICES = (
+        (1, "REFRESH"),
+        (2, "API"))
+    token = models.CharField(max_length=200, unique=True)
+    token_type = models.IntegerField(choices=TOKEN_CHOICES, default=1)
+    is_active = models.BooleanField(default=True)
+    sm_id = models.CharField(max_length=200, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.token + ' - ' + self.token_type
+
+
 class SmAccount(models.Model):
     '''
     Simply Measured account model
