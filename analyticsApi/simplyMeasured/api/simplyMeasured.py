@@ -53,11 +53,11 @@ class ApiSimplyMeasured(object):
         if not callback:
             lst_result.append(result)
         else:
-            callback(result)
+            callback(self.parseJson(result.content))
         count_hit = 1
         if result and result.content and \
                 SmUtility.get_remaining_page_count(result.content):
-            remaining = Utility.get_remaining_page_count(result.content)
+            remaining = SmUtility.get_remaining_page_count(result.content)
             while(remaining):
                 count_hit = count_hit + 1
                 self.payload['page'] = count_hit
@@ -66,10 +66,9 @@ class ApiSimplyMeasured(object):
                 if not callback:
                     lst_result.append(result)
                 else:
-                    callback(result)
+                    callback(self.parseJson(result.content))
 
-                remaining = Utility.get_remaining_page_count(
-                    self.get_post_json(result.content))
+                remaining = SmUtility.get_remaining_page_count(result.content)
         if callback:
             return count_hit
         return lst_result
