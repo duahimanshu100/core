@@ -29,8 +29,6 @@ class ApiToken(ApiSimplyMeasured):
         params['grant_type'] = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
         self.payload = params
         response = self.post()
-        import pdb
-        pdb.set_trace()
         if response:
             data = response.content.decode("utf-8")
             data = json.loads(data)

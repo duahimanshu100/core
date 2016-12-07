@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 
@@ -89,13 +90,29 @@ class Post(models.Model):
     profile_id = models.BigIntegerField(max_length=500)
     created_at = models.DateTimeField()
     body = models.TextField(null=True, blank=True)
-    content_type = models.CharField(max_length=1000)
     engagement_total = models.BigIntegerField(default=0)
     likes_count = models.BigIntegerField(default=0)
     replies_count = models.BigIntegerField(default=0)
     shares_count = models.BigIntegerField(default=0)
     channel = models.CharField(
         max_length=200, default='instagram')
+    url = models.CharField(max_length=500, null=True, blank=True)
+    target_url = models.CharField(max_length=500, null=True, blank=True)
+    sentiment = models.CharField(max_length=200, null=True, blank=True)
+    primary_content_type = models.CharField(
+        max_length=200, null=True, blank=True)
+    language = models.CharField(max_length=200, null=True, blank=True)
+    province = models.CharField(max_length=200, null=True, blank=True)
+    # is_brand = array null
+    image_urls = ArrayField(models.CharField(
+        max_length=500, blank=True), blank=True, null=True)
+    content_type = ArrayField(models.CharField(
+        max_length=500, blank=True), blank=True, null=True)
+    geo = ArrayField(models.FloatField(blank=True), blank=True, null=True)
+    distribution_type = models.CharField(max_length=200, null=True, blank=True)
+    country = models.CharField(max_length=200, null=True, blank=True)
+    # ds_id = models.CharField(max_length=200, null=True, blank=True)
+    datarank = models.FloatField(default=0)
 
     def __str__(self):
         return str(self.profile_id)
