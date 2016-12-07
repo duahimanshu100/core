@@ -16,10 +16,37 @@ class JsonAnalytics:
                     'attributes']['fields'].pop('author.id')
                 result['attributes']['fields']['body'] = result[
                     'attributes']['fields'].pop('post.body')
-                result['attributes']['fields']['content_type'] = result[
+                # result['attributes']['fields']['content_type'] = result[
+                #     'attributes']['fields'].pop('post.primary_content_type')
+                result['attributes']['fields']['url'] = result[
+                    'attributes']['fields'].pop('post.url')
+                result['attributes']['fields']['target_url'] = result[
+                    'attributes']['fields'].pop('post.target_url')
+
+                result['attributes']['fields']['sentiment'] = result[
+                    'attributes']['fields'].pop('post.sentiment')
+
+                result['attributes']['fields']['primary_content_type'] = result[
                     'attributes']['fields'].pop('post.primary_content_type')
+                result['attributes']['fields']['language'] = result[
+                    'attributes']['fields'].pop('post.language')
+                result['attributes']['fields']['province'] = result[
+                    'attributes']['fields'].pop('post.province')
+                result['attributes']['fields']['image_urls'] = result[
+                    'attributes']['fields'].pop('post.image_urls')
+                # result['attributes']['fields']['distribution_type'] = results[
+                #     'attributes']['fields'].pop('post.distribution_type')
+                result['attributes']['fields']['country'] = result[
+                    'attributes']['fields'].pop('post.country', None)
+                result['attributes']['fields']['datarank'] = result[
+                    'attributes']['fields'].pop('datarank')
+                # result['attributes']['fields']['geo'] = results[
+                #     'attributes']['fields'].pop('post.geo')
+                result['attributes']['fields']['content_types'] = result[
+                    'attributes']['fields'].pop('post.content_types')
                 result['attributes']['fields']['created_at'] = result[
                     'attributes']['fields'].pop('post.creation_date')
+
                 metrics = result['attributes']['metrics']
                 result['attributes']['fields']['engagement_total'] = metrics[
                     'post.engagement_total'] if metrics['post.engagement_total'] else 0
@@ -31,8 +58,9 @@ class JsonAnalytics:
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
                 lst_json.append(result['attributes']['fields'])
-            except KeyError:
-                pass
+            except (KeyError, TypeError) as tp:
+                import traceback
+                print(traceback.print_exc())
 
         return lst_json
 
