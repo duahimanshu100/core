@@ -34,13 +34,15 @@ class JsonAnalytics:
                     'attributes']['fields'].pop('post.province')
                 result['attributes']['fields']['image_urls'] = result[
                     'attributes']['fields'].pop('post.image_urls')
-                # result['attributes']['fields']['distribution_type'] = results[
-                #     'attributes']['fields'].pop('post.distribution_type')
+                result['attributes']['fields']['post_hash'] = result[
+                    'attributes']['fields'].get('post.hashtags',{})
+                result['attributes']['fields']['post_filter'] = result[
+                    'attributes']['fields'].pop('post.instagram.image_filter', None)
                 result['attributes']['fields']['country'] = result[
                     'attributes']['fields'].pop('post.country', None)
                 result['attributes']['fields']['datarank'] = result[
                     'attributes']['fields'].pop('datarank')
-                # result['attributes']['fields']['geo'] = results[
+                # result['attributes']['fields']['geo'] = result[
                 #     'attributes']['fields'].pop('post.geo')
                 result['attributes']['fields']['content_types'] = result[
                     'attributes']['fields'].pop('post.content_types')
@@ -57,6 +59,7 @@ class JsonAnalytics:
                 result['attributes']['fields'][
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
+                print(result['attributes']['fields']['post_hash'])
                 lst_json.append(result['attributes']['fields'])
             except (KeyError, TypeError) as tp:
                 import traceback

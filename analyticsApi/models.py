@@ -116,3 +116,27 @@ class Post(models.Model):
 
     def __str__(self):
         return str(self.profile_id)
+
+
+class PostHashTag(models.Model):
+    '''
+    Simply Measured Post Hashtags
+    '''
+    profile_id = models.CharField(max_length=200)
+    post_id = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
+
+    def __str__(self):
+        return str(self.post_id) + ' - ' + self.name
+
+
+class PostFilter(models.Model):
+    '''
+    Simply Measured Post Filters
+    '''
+    profile_id = models.CharField(max_length=200)
+    post_id = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
+
+    def __str__(self):
+        return str(self.post_id) + ' - ' + self.name
