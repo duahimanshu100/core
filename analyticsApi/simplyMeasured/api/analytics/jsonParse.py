@@ -35,7 +35,7 @@ class JsonAnalytics:
                 result['attributes']['fields']['image_urls'] = result[
                     'attributes']['fields'].pop('post.image_urls')
                 result['attributes']['fields']['post_hash'] = result[
-                    'attributes']['fields'].get('post.hashtags',{})
+                    'attributes']['fields'].get('post.hashtags', {})
                 result['attributes']['fields']['post_filter'] = result[
                     'attributes']['fields'].pop('post.instagram.image_filter', None)
                 result['attributes']['fields']['country'] = result[
@@ -91,5 +91,25 @@ class JsonAnalytics:
                 lst_json.append(result['attributes']['fields'])
             except KeyError:
                 pass
+
+        return lst_json
+
+    @staticmethod
+    def get_profiles_likes_json(results, profile_id):
+        '''
+        Convert simply measured data sources to json array according to model
+        '''
+        lst_json = []
+        for result in results:
+            if(result['attributes']['metrics']['post.likes_count'] > 0):
+                # try:
+                result['attributes']['metrics']['like_count'] = result[
+                    'attributes']['metrics'].pop('post.likes_count')
+                result['attributes']['metrics']['profile_id'] = profile_id
+                result['attributes']['metrics']['updated_at'] = result[
+                    'attributes']['dimensions'].pop('post.creation_date.by(hour)')
+                lst_json.append(result['attributes']['metrics'])
+                # except KeyError:
+                #     pass
 
         return lst_json

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
+from django.utils.timezone import datetime
 
 # Create your models here.
 
@@ -75,6 +76,8 @@ class Profile(models.Model):
     handle = models.CharField(max_length=200)
     display_name = models.CharField(max_length=200)
     audience_count = models.BigIntegerField(default=0)
+    update_likes_time = models.DateTimeField(
+        default=datetime(1979, 12, 11, 0, 0))
     channel_type = models.CharField(
         max_length=200, default='instagram')
 
@@ -140,3 +143,15 @@ class PostFilter(models.Model):
 
     def __str__(self):
         return str(self.post_id) + ' - ' + self.name
+
+
+class ProfileLike(models.Model):
+    '''
+    Simply Measured Profile Likes
+    '''
+    profile_id = models.CharField(max_length=200)
+    like_count = models.BigIntegerField(max_length=200, default=0)
+    updated_at = models.DateTimeField()
+
+    def __str__(self):
+        return str(self.profile_id)

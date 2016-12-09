@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import SmAccount
 from .models import SmDataSource
-from .models import Profile, Post, PostHashTag, PostFilter
+from .models import Profile, Post, PostHashTag, PostFilter, ProfileLike
 
 
 class SmAccountSerializer(serializers.ModelSerializer):
@@ -58,21 +58,23 @@ class PostSerializer(serializers.ModelSerializer):
         Serializer for SmAccount model
     '''
     post_hash = serializers.ListField(
-        child= serializers.CharField(required=False, allow_null=True),required=False, allow_null=True
+        child=serializers.CharField(required=False, allow_null=True), required=False, allow_null=True
     )
     post_filter = serializers.CharField(required=False, allow_null=True)
 
     def create(self, validated_data):
-        post_hashes = validated_data.pop('post_hash',{})
+        post_hashes = validated_data.pop('post_hash', {})
         post_filter = validated_data.pop('post_filter',)
         post = Post.objects.create(**validated_data)
 
         if post_hashes:
             for post_hash in post_hashes:
-                PostHashTag.objects.create(profile_id=validated_data['profile_id'], post_id =validated_data['post_id'], name=post_hash )
+                PostHashTag.objects.create(profile_id=validated_data[
+                                           'profile_id'], post_id=validated_data['post_id'], name=post_hash)
         if post_filter:
 
-            PostFilter.objects.create(profile_id=validated_data['profile_id'], post_id =validated_data['post_id'], name=post_filter )
+            PostFilter.objects.create(profile_id=validated_data[
+                                      'profile_id'], post_id=validated_data['post_id'], name=post_filter)
 
         return post
 
@@ -96,13 +98,22 @@ class PostSerializer(serializers.ModelSerializer):
     #
     #     return instance
 
-
     class Meta:
         model = Post
         # fields = Post._meta.get_all_field_names() + ['post_hash', 'post_filter']
-        fields = ('post_hash','post_filter','post_id','profile_id',
-                  'created_at','body','engagement_total','likes_count',
-                  'replies_count','shares_count','channel','url','target_url',
-                  'sentiment','primary_content_type','language','province','image_urls','content_type',
-                  'country','datarank'
+        fields = ('post_hash', 'post_filter', 'post_id', 'profile_id',
+                  'created_at', 'body', 'engagement_total', 'likes_count',
+                  'replies_count', 'shares_count', 'channel', 'url', 'target_url',
+                  'sentiment', 'primary_content_type', 'language', 'province', 'image_urls', 'content_type',
+                  'country', 'datarank'
                   )
+
+
+class ProfileLikeSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for Profile Like Filter model
+    '''
+
+    class Meta:
+        model = ProfileLike
+        fields = '__all__'

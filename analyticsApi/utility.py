@@ -10,7 +10,7 @@ class Utility:
     @staticmethod
     def save_and_update_data(serializer,
                              lst_data, model,
-                             db_key, data_key):
+                             db_key=None, data_key=None):
         '''
         create or update the object according
         to specified serializer and model
@@ -20,10 +20,13 @@ class Utility:
         lst_errors = []
 
         for data in lst_data:
-            try:
-                kw = {db_key: data[data_key]}
-                obj_model = model.objects.get(**kw)
-            except ObjectDoesNotExist:
+            if(db_key and data_key):
+                try:
+                    kw = {db_key: data[data_key]}
+                    obj_model = model.objects.get(**kw)
+                except ObjectDoesNotExist:
+                    obj_model = None
+            else:
                 obj_model = None
 
             if not obj_model:
