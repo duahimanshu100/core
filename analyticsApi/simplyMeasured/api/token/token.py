@@ -20,8 +20,11 @@ class ApiToken(ApiSimplyMeasured):
         self.url = self.url + ApiToken.BASE_URL
         self.headers['content-type'] = "application/x-www-form-urlencoded"
 
-    def get_api_token(self, sm_id):
-        token = SmToken.objects.filter(sm_id=sm_id, token_type=1).first()
+    def get_api_token(self, sm_id=None):
+        if sm_id:
+            token = SmToken.objects.filter(sm_id=sm_id, token_type=1).first()
+        else:
+            token = SmToken.objects.filter(token_type=1).first()
         refresh_token = token.token
         params = {}
         params['account_id'] = sm_id
