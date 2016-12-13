@@ -117,3 +117,19 @@ class ProfileLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileLike
         fields = '__all__'
+
+class PostsListSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for getting list of Posts
+    '''
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+class PostsFilterUsageSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for getting list of Posts
+    '''
+    class Meta:
+        model = PostFilter
+        fields = '__all__'

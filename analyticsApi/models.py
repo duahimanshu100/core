@@ -138,7 +138,7 @@ class PostFilter(models.Model):
     Simply Measured Post Filters
     '''
     profile_id = models.CharField(max_length=200)
-    post_id = models.CharField(max_length=200)
+    post_id = models.ForeignKey(Post, to_field='post_id')
     name = models.CharField(max_length=500)
 
     def __str__(self):
