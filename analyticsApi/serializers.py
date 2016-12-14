@@ -70,11 +70,11 @@ class PostSerializer(serializers.ModelSerializer):
         if post_hashes:
             for post_hash in post_hashes:
                 PostHashTag.objects.create(profile_id=validated_data[
-                                           'profile_id'], post_id=post.post_id, name=post_hash)
+                                           'profile_id'], post_id=post, name=post_hash)
         if post_filter:
 
             PostFilter.objects.create(profile_id=validated_data[
-                                      'profile_id'], post_id=post.post_id, name=post_filter)
+                                      'profile_id'], post_id=post, name=post_filter)
 
         return post
 
