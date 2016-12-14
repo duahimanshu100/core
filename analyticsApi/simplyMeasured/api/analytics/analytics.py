@@ -68,7 +68,10 @@ class ApiAnalytics(ApiSimplyMeasured):
         result = self.parseJson(self.get().content)
         return JsonAnalytics.get_profiles_json(result, account.id)
 
-    def get_profile_likes(self, sm_account_id, profile_id,query_params=None):
+    def get_profile_likes(self, sm_account_id, profile_id, query_params=None):
+        '''
+        Get profile likes
+        '''
         self.url = self.url + str(sm_account_id) + '/posts/metrics'
         if query_params:
             self.payload = {**self.payload, **query_params}

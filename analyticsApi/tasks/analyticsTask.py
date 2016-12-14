@@ -75,7 +75,7 @@ def syncProfilePosts(profile):
 
     }
     obj = ApiAnalytics(TOKEN)
-    print(params)
+    # print(params)
     obj.get_posts(profile.sm_account.sm_id, params)
 
 
