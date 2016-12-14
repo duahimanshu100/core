@@ -4,6 +4,7 @@ from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerial
 import dateutil.parser
 from django.db.models import Count
 from django.db.models import IntegerField, Sum
+from django.db.models import CharField, Case, Value, When
 
 
 class PostListApi(generics.ListAPIView):
@@ -170,5 +171,9 @@ class PostGeolocationApi(generics.ListAPIView):
                      output_field=IntegerField())
             ))
 
-        serialized = list(queryset)
-        return Response(serialized)
+        if not queryset.get('with_geo',None):
+            queryset['with_geo'] = 0
+        if not queryset.get('without_geo',None):
+            queryset['without_geo'] = 0
+
+        return Response(queryset)
