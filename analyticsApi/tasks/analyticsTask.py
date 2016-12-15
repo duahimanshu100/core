@@ -68,8 +68,9 @@ def syncProfilePosts(profile):
     of simply measured  associated with the token and profile
     '''
     params = {'filter': [
-        'post.creation_date.gte(2016-01-01)',
+        # 'post.creation_date.gte(2016-01-01)',
         'author.id.eq(' + str(profile.profile_id) + ')'],
+        'limit': 1000,
         'fields': 'post.url,post.target_url,post.sentiment,post.primary_content_type,post.language,post.province,post.is_brand,post.image_urls,post.distribution_type,post.country,data_source_id,datarank,channel,author.profile_link,author.image_url,author.display_name,post.geo,post.hashtags,post.instagram.image_filter,post.body,post.id,post.content_types,post.creation_date,author.id',
         'metrics': 'post.replies_count,post.shares_count,post.likes_count,post.engagement_total,post.dislikes_count',
 
