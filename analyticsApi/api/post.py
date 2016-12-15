@@ -1,11 +1,11 @@
-from rest_framework import generics
-from rest_framework.response import Response
-from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer
 import dateutil.parser
+from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer
+from django.db.models import Case, When
 from django.db.models import Count
 from django.db.models import IntegerField, Sum
-from django.db.models import CharField, Case, Value, When
 from django.db.models.functions import Extract
+from rest_framework import generics
+from rest_framework.response import Response
 
 
 class PostListApi(generics.ListAPIView):
@@ -172,21 +172,24 @@ class PostGeolocationApi(generics.ListAPIView):
                      output_field=IntegerField())
             ))
 
-        if not queryset.get('with_geo',None):
+        if not queryset.get('with_geo', None):
             queryset['with_geo'] = 0
 
-        if not queryset.get('without_geo',None):
+        if not queryset.get('without_geo', None):
             queryset['without_geo'] = 0
 
-        queryset['total'] = queryset['with_geo']  +  queryset['without_geo']
-        if queryset['total'] !=0:
-            queryset['without_geo_percent'] = round((queryset['without_geo']/queryset['total'])*100,2)
-            queryset['with_geo_percent'] = round((queryset['with_geo']/queryset['total'])*100,2)
+        queryset['total'] = queryset['with_geo'] + queryset['without_geo']
+        if queryset['total'] != 0:
+            queryset['without_geo_percent'] = round(
+                (queryset['without_geo'] / queryset['total']) * 100, 2)
+            queryset['with_geo_percent'] = round(
+                (queryset['with_geo'] / queryset['total']) * 100, 2)
         else:
             queryset['without_geo_percent'] = 0
             queryset['with_geo_percent'] = 0
 
         return Response(queryset)
+
 
 class PostTagRepartitionApi(generics.ListAPIView):
     '''
@@ -227,16 +230,16 @@ class PostTagRepartitionApi(generics.ListAPIView):
                      output_field=IntegerField())
             ))
 
-        if not queryset.get('with_geo',None):
+        if not queryset.get('with_geo', None):
             queryset['with_geo'] = 0
 
-        if not queryset.get('without_geo',None):
+        if not queryset.get('without_geo', None):
             queryset['without_geo'] = 0
 
-        queryset['total'] = queryset['with_geo']  +  queryset['without_geo']
-        if queryset['total'] !=0:
-            queryset['without_geo_percent'] = round((queryset['without_geo']/queryset['total'])*100,2)
-            queryset['with_geo_percent'] = round((queryset['with_geo']/queryset['total'])*100,2)
+        queryset['total'] = queryset['with_geo'] + queryset['without_geo']
+        if queryset['total'] != 0:
+            queryset['without_geo_percent'] = round((queryset['without_geo'] / queryset['total']) * 100, 2)
+            queryset['with_geo_percent'] = round((queryset['with_geo'] / queryset['total']) * 100, 2)
         else:
             queryset['without_geo_percent'] = 0
             queryset['with_geo_percent'] = 0
@@ -276,5 +279,42 @@ class PostDensityApi(generics.ListAPIView):
             queryset = queryset.filter(primary_content_type=filter)
 
         queryset = queryset.annotate(
-        data=Extract('created_at', range_type)).values('data').annotate(count=Count('id')).values('data','count').order_by('data')
+            data=Extract('created_at', range_type)).values('data').annotate(count=Count('id')).values('data',
+                                                                                                      'count').order_by(
+            'data')
+        return Response(queryset)
+
+
+class PostDistributionApi(generics.ListAPIView):
+    '''
+    List post and post count by profile
+    '''
+    serializer_class = PostsListSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def get_queryset(self):
+        profile_id = self.kwargs['profile_id']
+        queryset = self.model.objects.filter(profile_id=profile_id)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        filter = self.request.query_params.get('filter', None)
+        # range_type = self.request.query_params.get('range_type', 'week_day')
+
+        if from_date:
+            from_date = dateutil.parser.parse(from_date)
+            queryset = queryset.filter(created_at__gte=from_date)
+        if to_date:
+            to_date = dateutil.parser.parse(to_date)
+            queryset = queryset.filter(created_at__lte=to_date)
+
+        if filter:
+            queryset = queryset.filter(primary_content_type=filter)
+
+        queryset = queryset.annotate(year=Extract('created_at', 'year'), month=Extract(
+            'created_at', 'month')).values('year', 'month').annotate(Count('id'))
         return Response(queryset)
