@@ -97,6 +97,7 @@ class Post(models.Model):
     likes_count = models.BigIntegerField(default=0)
     replies_count = models.BigIntegerField(default=0)
     shares_count = models.BigIntegerField(default=0)
+    has_hashtag = models.BooleanField(default=False)
     channel = models.CharField(
         max_length=200, default='instagram')
     url = models.CharField(max_length=500, null=True, blank=True)

@@ -221,28 +221,28 @@ class PostTagRepartitionApi(generics.ListAPIView):
             queryset = queryset.filter(primary_content_type=filter)
 
         queryset = queryset.aggregate(
-            with_geo=Sum(
-                Case(When(geo__isnull=False, then=1),
+            with_tag=Sum(
+                Case(When(has_hashtag=True, then=1),
                      output_field=IntegerField())
             ),
-            without_geo=Sum(
-                Case(When(geo__isnull=True, then=1),
+            without_tag=Sum(
+                Case(When(has_hashtag=False, then=1),
                      output_field=IntegerField())
             ))
 
-        if not queryset.get('with_geo', None):
-            queryset['with_geo'] = 0
+        if not queryset.get('with_tag', None):
+            queryset['with_tag'] = 0
 
-        if not queryset.get('without_geo', None):
-            queryset['without_geo'] = 0
+        if not queryset.get('without_tag', None):
+            queryset['without_tag'] = 0
 
-        queryset['total'] = queryset['with_geo'] + queryset['without_geo']
+        queryset['total'] = queryset['with_tag'] + queryset['without_tag']
         if queryset['total'] != 0:
-            queryset['without_geo_percent'] = round((queryset['without_geo'] / queryset['total']) * 100, 2)
-            queryset['with_geo_percent'] = round((queryset['with_geo'] / queryset['total']) * 100, 2)
+            queryset['without_tag_percent'] = round((queryset['without_tag'] / queryset['total']) * 100, 2)
+            queryset['with_tag_percent'] = round((queryset['with_tag'] / queryset['total']) * 100, 2)
         else:
-            queryset['without_geo_percent'] = 0
-            queryset['with_geo_percent'] = 0
+            queryset['without_tag_percent'] = 0
+            queryset['with_tag_percent'] = 0
 
         return Response(queryset)
 

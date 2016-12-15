@@ -64,7 +64,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         post_hashes = validated_data.pop('post_hash', {})
-        post_filter = validated_data.pop('post_filter',)
+        post_filter = validated_data.pop('post_filter')
+        if post_hashes:
+            validated_data['has_hashtag'] = True
         post = Post.objects.create(**validated_data)
 
         if post_hashes:
