@@ -36,6 +36,8 @@ class JsonAnalytics:
                     'attributes']['fields'].pop('post.image_urls')
                 result['attributes']['fields']['post_hash'] = result[
                     'attributes']['fields'].get('post.hashtags', {})
+                if result['attributes']['fields']['post_hash']:
+                    result['attributes']['fields']['has_hashtag'] = True
                 result['attributes']['fields']['post_filter'] = result[
                     'attributes']['fields'].pop('post.instagram.image_filter', None)
                 result['attributes']['fields']['country'] = result[
