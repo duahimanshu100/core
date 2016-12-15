@@ -105,7 +105,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'created_at', 'body', 'engagement_total', 'likes_count',
                   'replies_count', 'shares_count', 'channel', 'url', 'target_url',
                   'sentiment', 'primary_content_type', 'language', 'province', 'image_urls', 'content_type',
-                  'country', 'datarank'
+                  'country', 'datarank', 'has_hashtag'
                   )
 
 
