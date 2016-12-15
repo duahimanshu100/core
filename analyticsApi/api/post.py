@@ -188,6 +188,62 @@ class PostGeolocationApi(generics.ListAPIView):
 
         return Response(queryset)
 
+class PostTagRepartitionApi(generics.ListAPIView):
+    '''
+    List post with geo and post without geo by profile
+    '''
+    serializer_class = PostsListSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        profile_id = self.kwargs['profile_id']
+        queryset = self.model.objects.filter(profile_id=profile_id)
+        return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # 2016-12-02T17:00:25.910711
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        filter = self.request.query_params.get('filter', None)
+
+        if from_date:
+            from_date = dateutil.parser.parse(from_date)
+            queryset = queryset.filter(created_at__gte=from_date)
+        if to_date:
+            to_date = dateutil.parser.parse(to_date)
+            queryset = queryset.filter(created_at__lte=to_date)
+
+        if filter:
+            queryset = queryset.filter(primary_content_type=filter)
+
+        queryset = queryset.aggregate(
+            with_geo=Sum(
+                Case(When(geo__isnull=False, then=1),
+                     output_field=IntegerField())
+            ),
+            without_geo=Sum(
+                Case(When(geo__isnull=True, then=1),
+                     output_field=IntegerField())
+            ))
+
+        if not queryset.get('with_geo',None):
+            queryset['with_geo'] = 0
+
+        if not queryset.get('without_geo',None):
+            queryset['without_geo'] = 0
+
+        queryset['total'] = queryset['with_geo']  +  queryset['without_geo']
+        if queryset['total'] !=0:
+            queryset['without_geo_percent'] = round((queryset['without_geo']/queryset['total'])*100,2)
+            queryset['with_geo_percent'] = round((queryset['with_geo']/queryset['total'])*100,2)
+        else:
+            queryset['without_geo_percent'] = 0
+            queryset['with_geo_percent'] = 0
+
+        return Response(queryset)
+
+
 class PostDensityApi(generics.ListAPIView):
     '''
     List post and post count by profile
