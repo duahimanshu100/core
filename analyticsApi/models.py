@@ -146,6 +146,45 @@ class PostFilter(models.Model):
         return str(self.post_id) + ' - ' + self.name
 
 
+class PostLike(models.Model):
+    '''
+    Simply Measured Post Share
+    '''
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    like_count = models.BigIntegerField(default=0)
+    like_diff = models.BigIntegerField(default=0)
+    updated_at = models.DateTimeField()
+    created_at = models.DateTimeField()
+
+    def __str__(self):
+        return str(self.post_id)
+
+class PostComment(models.Model):
+    '''
+    Simply Measured Post Comments
+    '''
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    comment_count = models.BigIntegerField( default=0)
+    comment_diff = models.BigIntegerField( default=0)
+    updated_at = models.DateTimeField()
+    created_at = models.DateTimeField()
+
+    def __str__(self):
+        return str(self.post_id)
+
+class PostShare(models.Model):
+    '''
+    Simply Measured Post Share
+    '''
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    share_count = models.BigIntegerField(default=0)
+    share_diff = models.BigIntegerField(default=0)
+    updated_at = models.DateTimeField()
+    created_at = models.DateTimeField()
+
+    def __str__(self):
+        return str(self.post_id)
+
 class ProfileLike(models.Model):
     '''
     Simply Measured Profile Likes
@@ -156,3 +195,5 @@ class ProfileLike(models.Model):
 
     def __str__(self):
         return str(self.profile_id)
+
+
