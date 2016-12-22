@@ -21,11 +21,18 @@ app.autodiscover_tasks()
 
 
 
-from celery.task.schedules import crontab
-from celery.decorators import periodic_task
+from celery.schedules import crontab
 
+app.conf.beat_schedule = {
+    # Executes every Monday morning at 7:30 a.m.
+    'add-every-monday-morning': {
+        'task': 'some_task',
+        'schedule': crontab(),
+        'args': (16, 16),
+    },
+}
 
-@periodic_task(run_every=(crontab(minute='*/1')), name="some_task", ignore_result=True)
-def some_task():
+@app.task
+def some_task(a,b):
     print('Hello')
     return 'hello'
