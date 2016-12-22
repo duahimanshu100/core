@@ -25,6 +25,7 @@ class ApiToken(ApiSimplyMeasured):
             token = SmToken.objects.filter(sm_id=sm_id, token_type=1).first()
         else:
             token = SmToken.objects.filter(token_type=1).first()
+            sm_id =  token.sm_id
         refresh_token = token.token
         params = {}
         params['account_id'] = sm_id
@@ -35,4 +36,4 @@ class ApiToken(ApiSimplyMeasured):
         if response:
             data = response.content.decode("utf-8")
             data = json.loads(data)
-            SmToken.objects.create(token_type=2, token=data['id_token'])
+            return SmToken.objects.create(token_type=2, token=data['id_token']).token

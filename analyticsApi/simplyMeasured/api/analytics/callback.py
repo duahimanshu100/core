@@ -12,5 +12,7 @@ class AnalyticsCallback:
         Get and save all post according to profile
         '''
         post_json = JsonAnalytics.get_post_json(data)
+        # import pdb
+        # pdb.set_trace()
         print(Utility.save_and_update_data(
             PostSerializer, post_json, Post, 'post_id', 'post_id'))

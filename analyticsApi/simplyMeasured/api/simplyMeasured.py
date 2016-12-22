@@ -78,5 +78,5 @@ class ApiSimplyMeasured(object):
             POST methods for all the apis
         '''
         return requests.post(self.url,
-                             params=self.payload,
+                             data=self.payload,
                              headers=self.headers)

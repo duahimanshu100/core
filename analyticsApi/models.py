@@ -80,6 +80,7 @@ class Profile(models.Model):
         default=datetime(1979, 12, 11, 0, 0))
     channel_type = models.CharField(
         max_length=200, default='instagram')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.profile_id) + ' - ' + self.display_name
@@ -153,8 +154,7 @@ class PostLike(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     like_count = models.BigIntegerField(default=0)
     like_diff = models.BigIntegerField(default=0)
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.post_id)
@@ -166,8 +166,7 @@ class PostComment(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     comment_count = models.BigIntegerField( default=0)
     comment_diff = models.BigIntegerField( default=0)
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.post_id)
@@ -179,8 +178,7 @@ class PostShare(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     share_count = models.BigIntegerField(default=0)
     share_diff = models.BigIntegerField(default=0)
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.post_id)

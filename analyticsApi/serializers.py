@@ -77,30 +77,31 @@ class PostSerializer(serializers.ModelSerializer):
             PostFilter.objects.create(profile_id=validated_data[
                 'profile_id'], post_id=post, name=post_filter)
 
+        self.update_counts(post,validated_data)
+
         return post
 
     def update(self, instance, validated_data):
-        import pdb
-        pdb.set_trace()
         update_response = super(PostSerializer, self).update(instance, validated_data)
+        self.update_counts(instance, validated_data)
 
         return update_response
 
     def get_diff(self, post, model, field, count, count_field):
-        instance = model.objects.filter(post_id=post).order_by(field).latest()
+        instance = model.objects.filter(post_id=post).order_by(field).first()
         if instance:
             return instance.count_field - count
         else:
             return count
 
     def update_counts(self, instance, validated_data):
-        shares_count = validated_data('shares_count', 0)
-        likes_count = validated_data('likes_count', 0)
-        replies_count = validated_data('replies_count', 0)
-        like_diff = self.get_diff(instance, PostLike, 'created_at', likes_count, 'like_count') if likes_count else 0
-        share_diff = self.get_diff(instance, PostShare, 'created_at', shares_count,
+        shares_count = validated_data.get('shares_count', 0)
+        likes_count = validated_data.get('likes_count', 0)
+        replies_count = validated_data.get('replies_count', 0)
+        like_diff = self.get_diff(instance, PostLike, '-created_at', likes_count, 'like_count') if likes_count else 0
+        share_diff = self.get_diff(instance, PostShare, '-created_at', shares_count,
                                    'share_count') if shares_count else 0
-        comment_diff = self.get_diff(instance, PostComment, 'created_at', replies_count,
+        comment_diff = self.get_diff(instance, PostComment, '-created_at', replies_count,
                                      'comment_count') if likes_count else 0
 
         PostLike.objects.create(post_id=instance, like_count=likes_count, like_diff=like_diff)
