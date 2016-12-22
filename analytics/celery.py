@@ -11,17 +11,21 @@ app = Celery('analytics')
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
+
+
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # Calls test('hello') every 10 seconds.
-    sender.add_periodic_task(10.0, test.s('hello'), name='add every 10')
 
 
-@app.task
-def test(arg):
-    print(arg)
+
+from celery.task.schedules import crontab
+from celery.decorators import periodic_task
+
+
+@periodic_task(run_every=(crontab(minute='*/1')), name="some_task", ignore_result=True)
+def some_task():
+    print('Hello')
+    return 'hello'
