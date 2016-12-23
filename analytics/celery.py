@@ -17,22 +17,3 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
-
-
-
-
-from celery.schedules import crontab
-
-app.conf.beat_schedule = {
-    # Executes every Monday morning at 7:30 a.m.
-    'add-every-monday-morning': {
-        'task': 'some_task',
-        'schedule': crontab(),
-        'args': (16, 16),
-    },
-}
-
-@app.task
-def some_task(a,b):
-    print('Hello')
-    return 'hello'
