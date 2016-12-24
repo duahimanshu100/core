@@ -44,6 +44,35 @@ class PostHashTagSerializer(serializers.ModelSerializer):
         model = PostHashTag
         fields = '__all__'
 
+class PostLikeSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    class Meta:
+        model = PostLike
+        fields = '__all__'
+
+
+class PostShareSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    class Meta:
+        model = PostShare
+        fields = '__all__'
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    class Meta:
+        model = PostComment
+        fields = '__all__'
+
 
 class PostFilterSerializer(serializers.ModelSerializer):
     '''
@@ -159,3 +188,12 @@ class PostsTagUsageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostHashTag
         fields = '__all__'
+
+class PostSerializerCreate(serializers.ModelSerializer):
+    '''
+        Serializer for SmAccount model
+    '''
+    class Meta:
+        model = Post
+        fields = '__all__'
+

@@ -6,6 +6,12 @@ class JsonAnalytics:
         Convert simply measured data sources to json array according to model
         '''
         lst_json = []
+        hash_tags =[]
+        likes_count = []
+        shares_count = []
+        replies_count = []
+        filters = []
+
         for result in results:
             try:
                 result['attributes']['fields']['channel'] = result[
@@ -62,11 +68,31 @@ class JsonAnalytics:
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
                 lst_json.append(result['attributes']['fields'])
+
+            #     Creating hashtags list
+                if(result['attributes']['fields']['post_hash']):
+                    hash_tags = hash_tags + [{'name':i,'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']} for i in result['attributes']['fields']['post_hash']]
+            #     Creating Filter list
+                if (result['attributes']['fields']['post_filter']):
+                    filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
+            # Creating Likes Count
+                if (result['attributes']['fields']['likes_count']):
+                    likes_count.append({'like_count': result['attributes']['fields']['likes_count'],
+                                    'post_id_id': result['attributes']['fields']['post_id']})
+            #     Creating Replies Count
+                if (result['attributes']['fields']['replies_count']):
+                    replies_count.append({'comment_count': result['attributes']['fields']['replies_count'],
+                                        'post_id_id': result['attributes']['fields']['post_id']})
+            #     Creating Shares Count
+                if (result['attributes']['fields']['shares_count']):
+                    shares_count.append({'share_count': result['attributes']['fields']['shares_count'],
+                                          'post_id_id': result['attributes']['fields']['post_id']})
+
             except (KeyError, TypeError) as tp:
                 import traceback
                 print(traceback.print_exc())
 
-        return lst_json
+        return lst_json, hash_tags, likes_count, shares_count, replies_count, filters
 
     @staticmethod
     def get_profiles_json(results, account_id):

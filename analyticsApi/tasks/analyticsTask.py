@@ -39,9 +39,10 @@ def syncAllProfilesPost():
     SyncPost will create or update the posts
     of simply measured  associated with the token and profiles
     '''
-
+    api_token = ApiToken()
+    TOKEN = api_token.get_api_token()
     for profile in Profile.objects.filter(is_active=True):
-        syncProfilePosts(profile)
+        syncProfilePosts(profile, TOKEN)
 
 
 def syncAllProfilesLikes():
@@ -78,7 +79,7 @@ def syncProfileLikes(profile):
         print('Token Not Found')
 
 
-def syncProfilePosts(profile):
+def syncProfilePosts(profile, TOKEN):
     '''
     syncProfilePosts will create or update the posts
     of simply measured  associated with the token and profile
@@ -89,8 +90,8 @@ def syncProfilePosts(profile):
         'fields': 'post.url,post.target_url,post.sentiment,post.primary_content_type,post.language,post.province,post.is_brand,post.image_urls,post.distribution_type,post.country,data_source_id,datarank,channel,author.profile_link,author.image_url,author.display_name,post.geo,post.hashtags,post.instagram.image_filter,post.body,post.id,post.content_types,post.creation_date,author.id',
         'metrics': 'post.replies_count,post.shares_count,post.likes_count,post.engagement_total,post.dislikes_count'
     }
-    api_token = ApiToken()
-    TOKEN = api_token.get_api_token()
+    # api_token = ApiToken()
+    # TOKEN = api_token.get_api_token()
     if (TOKEN):
         obj = ApiAnalytics(TOKEN)
         # print(params)

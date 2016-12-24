@@ -120,7 +120,7 @@ class Post(models.Model):
     datarank = models.FloatField(default=0)
 
     def __str__(self):
-        return str(self.profile_id)
+        return str(self.profile_id) + ' - ' + str(self.url)
 
 
 class PostHashTag(models.Model):
