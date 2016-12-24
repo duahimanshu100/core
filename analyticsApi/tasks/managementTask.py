@@ -18,7 +18,8 @@ def syncAccounts():
     SyncAccounts will create or update the accounts
     of simply measured  associated with the token
     '''
-
+    api_token = ApiToken()
+    TOKEN = api_token.get_api_token()
     obj = ApiManagement(TOKEN)
     result = obj.get_sm_accounts()
     r = Utility.save_and_update_data(
