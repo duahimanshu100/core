@@ -33,7 +33,7 @@ def syncProfiles():
         print('Token Not Found')
 
 
-@periodic_task(run_every=(crontab(minute='*/60')), name="syncAllProfilesPost", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute='*/60')), name="syncAllProfilesPost", ignore_result=True)
 def syncAllProfilesPost():
     '''
     SyncPost will create or update the posts
