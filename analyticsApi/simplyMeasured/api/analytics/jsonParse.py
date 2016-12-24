@@ -90,6 +90,7 @@ class JsonAnalytics:
                 result['attributes']['fields']['audience_count'] = result[
                     'attributes']['metrics'].pop('profile.audience_count')
                 result['attributes']['fields']['sm_account'] = account_id
+                result['attributes']['fields']['is_active'] = True
                 lst_json.append(result['attributes']['fields'])
             except KeyError:
                 pass

@@ -13,12 +13,12 @@ from datetime import datetime
 from django.core.mail.message import EmailMessage
 
 django.setup()
-from analyticsApi.tasks.analyticsTask import syncProfilePosts,syncProfiles
+from analyticsApi.tasks.analyticsTask import syncAllProfilesPost,syncProfiles
 
 
 def shedular_of_post():
     syncProfiles()
-    syncProfilePosts()
+    syncAllProfilesPost()
 
 
 class RepeatedTimer(object):
