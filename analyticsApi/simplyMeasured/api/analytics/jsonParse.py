@@ -76,16 +76,13 @@ class JsonAnalytics:
                 if (result['attributes']['fields']['post_filter']):
                     filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
             # Creating Likes Count
-                if (result['attributes']['fields']['likes_count']):
-                    likes_count.append({'like_count': result['attributes']['fields']['likes_count'],
+                likes_count.append({'like_count': result['attributes']['fields']['likes_count'],
                                     'post_id_id': result['attributes']['fields']['post_id']})
             #     Creating Replies Count
-                if (result['attributes']['fields']['replies_count']):
-                    replies_count.append({'comment_count': result['attributes']['fields']['replies_count'],
+                replies_count.append({'comment_count': result['attributes']['fields']['replies_count'],
                                         'post_id_id': result['attributes']['fields']['post_id']})
             #     Creating Shares Count
-                if (result['attributes']['fields']['shares_count']):
-                    shares_count.append({'share_count': result['attributes']['fields']['shares_count'],
+                shares_count.append({'share_count': result['attributes']['fields']['shares_count'],
                                           'post_id_id': result['attributes']['fields']['post_id']})
 
             except (KeyError, TypeError) as tp:
