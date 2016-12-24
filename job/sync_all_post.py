@@ -49,4 +49,5 @@ class RepeatedTimer(object):
 
 
 # it auto-starts, no need of rt.start()
-runScheduler = RepeatedTimer(120, shedular_of_post)
+runScheduler = RepeatedTimer(3600/2, shedular_of_post)
+# shedular_of_post()

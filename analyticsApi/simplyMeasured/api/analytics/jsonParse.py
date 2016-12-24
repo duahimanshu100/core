@@ -61,7 +61,6 @@ class JsonAnalytics:
                 result['attributes']['fields'][
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
-                print(result['attributes']['fields']['post_hash'])
                 lst_json.append(result['attributes']['fields'])
             except (KeyError, TypeError) as tp:
                 import traceback

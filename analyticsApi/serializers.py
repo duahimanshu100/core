@@ -90,7 +90,7 @@ class PostSerializer(serializers.ModelSerializer):
     def get_diff(self, post, model, field, count, count_field):
         instance = model.objects.filter(post_id=post).order_by(field).first()
         if instance:
-            return instance.count_field - count
+            return getattr(instance, count_field) - count
         else:
             return count
 
