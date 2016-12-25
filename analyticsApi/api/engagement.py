@@ -29,5 +29,4 @@ class PostMetricListApi(generics.ListAPIView):
                                       total_like=Sum('like_count'),
                                       total_comment=Sum('comment_count'),
                                       )
-        serialized = list(queryset)
-        return Response(serialized)
+        return Response(queryset)
