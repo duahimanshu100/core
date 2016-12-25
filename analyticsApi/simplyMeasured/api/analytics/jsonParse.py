@@ -12,6 +12,10 @@ class JsonAnalytics:
 
         for result in results:
             try:
+                if(result['attributes']['fields'].get('post.geo')):
+                    result['attributes']['fields']['geo'] = [result[
+                        'attributes']['fields']['post.geo']['lat'], result[
+                        'attributes']['fields']['post.geo']['lon']]
                 result['attributes']['fields']['channel'] = result[
                     'attributes']['fields'].pop('channel')
                 result['attributes']['fields']['post_id'] = result[
