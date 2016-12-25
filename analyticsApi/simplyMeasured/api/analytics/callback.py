@@ -13,8 +13,6 @@ class AnalyticsCallback:
         '''
         print('Start Saving Posts & Related Data at ' + str(datetime.now()))
         post_json , hash_json, metrics_json, filters_json = JsonAnalytics.get_post_json(data)
-        # import pdb
-        # pdb.set_trace()
         dict_post = dict(Post.objects.filter(profile_id=post_json[0]['profile_id']).values_list('post_id', 'id'))
 
         def filter_only_create_post(obj_json):
@@ -25,12 +23,7 @@ class AnalyticsCallback:
 
         posts = filter(filter_only_create_post, PostSerializerCreate(post_json, many=True).data)
         hashes = filter(filter_only_create_post, hash_json)
-        # likes = filter(filter_only_create_post, likes_json)
-        # shares = filter(filter_only_create_post, shares_json)
-        # replies = filter(filter_only_create_post, replies_json)
         filters = filter(filter_only_create_post, filters_json)
-        import pdb
-        pdb.set_trace()
 
         Post.objects.bulk_create([Post(**i) for i in posts])
         PostHashTag.objects.bulk_create([PostHashTag(**i) for i in hashes])
@@ -44,8 +37,3 @@ class AnalyticsCallback:
         # Saving all the metrics
         PostMetric.objects.bulk_create([PostMetric(**i) for i in metrics_json])
         print('Finished  Saving Posts & Related Data at ' + str(datetime.now()))
-        # print(post_json)
-        # import pdb
-        # pdb.set_trace()
-        # print(Utility.save_and_update_data(
-        #     PostSerializer, post_json, Post, 'post_id', 'post_id'))
