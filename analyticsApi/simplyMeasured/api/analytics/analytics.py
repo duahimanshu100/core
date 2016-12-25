@@ -41,7 +41,7 @@ class ApiAnalytics(ApiSimplyMeasured):
     def get_posts(self, sm_account_id, query_params=None):
         self.url = self.url + str(sm_account_id) + '/posts'
         if query_params:
-            self.payload = update(**query_params)
+            self.payload.update(**query_params)
             # self.payload = {**self.payload, **query_params}
         result = self.get_all(AnalyticsCallback.get_posts_by_profile_callback)
 
@@ -75,6 +75,6 @@ class ApiAnalytics(ApiSimplyMeasured):
         '''
         self.url = self.url + str(sm_account_id) + '/posts/metrics'
         if query_params:
-            self.payload = {**self.payload, **query_params}
+            self.payload.update(**query_params)
         result = self.parseJson(self.get().content)
         return JsonAnalytics.get_profiles_likes_json(result, profile_id)
