@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Profile, Post, PostHashTag, PostFilter, ProfileLike, PostLike, PostShare, PostComment
+from .models import Profile, Post, PostHashTag, PostFilter, ProfileLike, PostLike, PostShare, PostComment, PostMetric
 from .models import SmAccount
 from .models import SmDataSource
 
@@ -51,6 +51,16 @@ class PostLikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostLike
+        fields = '__all__'
+
+
+class PostMetricSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    class Meta:
+        model = PostMetric
         fields = '__all__'
 
 

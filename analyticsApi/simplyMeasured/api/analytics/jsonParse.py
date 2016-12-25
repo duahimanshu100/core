@@ -7,9 +7,7 @@ class JsonAnalytics:
         '''
         lst_json = []
         hash_tags =[]
-        likes_count = []
-        shares_count = []
-        replies_count = []
+        metrics_count = []
         filters = []
 
         for result in results:
@@ -75,21 +73,19 @@ class JsonAnalytics:
             #     Creating Filter list
                 if (result['attributes']['fields']['post_filter']):
                     filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
-            # Creating Likes Count
-                likes_count.append({'like_count': result['attributes']['fields']['likes_count'],
+            # Creating Metrics Count
+                metrics_count.append({'like_count': result['attributes']['fields']['likes_count'],
+                                    'is_latest' : True,
+                                    'profile_id': result['attributes']['fields']['profile_id'],
+                                    'comment_count': result['attributes']['fields']['replies_count'],
+                                    'share_count': result['attributes']['fields']['shares_count'],
                                     'post_id_id': result['attributes']['fields']['post_id']})
-            #     Creating Replies Count
-                replies_count.append({'comment_count': result['attributes']['fields']['replies_count'],
-                                        'post_id_id': result['attributes']['fields']['post_id']})
-            #     Creating Shares Count
-                shares_count.append({'share_count': result['attributes']['fields']['shares_count'],
-                                          'post_id_id': result['attributes']['fields']['post_id']})
 
             except (KeyError, TypeError) as tp:
                 import traceback
                 print(traceback.print_exc())
 
-        return lst_json, hash_tags, likes_count, shares_count, replies_count, filters
+        return lst_json, hash_tags, metrics_count, filters
 
     @staticmethod
     def get_profiles_json(results, account_id):
