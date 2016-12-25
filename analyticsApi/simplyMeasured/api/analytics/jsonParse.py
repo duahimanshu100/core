@@ -56,12 +56,8 @@ class JsonAnalytics:
                     'attributes']['fields'].pop('post.creation_date')
 
                 metrics = result['attributes']['metrics']
-                result['attributes']['fields'][
-                    'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
                 lst_json.append(result['attributes']['fields'])
-                import pdb
-                pdb.set_trace()
 
             #     Creating hashtags list
                 if(result['attributes']['fields']['post_hash']):
