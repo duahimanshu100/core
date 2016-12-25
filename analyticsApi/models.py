@@ -123,6 +123,23 @@ class Post(models.Model):
         return str(self.profile_id) + ' - ' + str(self.url)
 
 
+class PostMetric(models.Model):
+    '''
+    Simply Measured Post Hashtags
+    '''
+    profile_id = models.CharField(max_length=200)
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    like_count = models.BigIntegerField(default=0)
+    comment_count = models.BigIntegerField(default=0)
+    share_count = models.BigIntegerField(default=0)
+    engagement_count = models.BigIntegerField(default=0)
+    dislike_count = models.BigIntegerField(default=0)
+    is_latest = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.post_id)
+
 class PostHashTag(models.Model):
     '''
     Simply Measured Post Hashtags
@@ -154,6 +171,7 @@ class PostLike(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     like_count = models.BigIntegerField(default=0)
     like_diff = models.BigIntegerField(default=0)
+    is_latest = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -166,6 +184,7 @@ class PostComment(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     comment_count = models.BigIntegerField( default=0)
     comment_diff = models.BigIntegerField( default=0)
+    is_latest = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -178,6 +197,7 @@ class PostShare(models.Model):
     post_id = models.ForeignKey(Post, to_field='post_id')
     share_count = models.BigIntegerField(default=0)
     share_diff = models.BigIntegerField(default=0)
+    is_latest = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
