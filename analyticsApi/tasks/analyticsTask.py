@@ -32,7 +32,6 @@ def syncProfiles():
         print('Token Not Found')
 
 
-@periodic_task(run_every=(crontab(minute='*/60')), name="syncAllProfilesPost", ignore_result=True)
 def syncAllProfilesPost():
     '''
     SyncPost will create or update the posts
@@ -107,3 +106,8 @@ def syncSinglePost(post):
     ]}
     obj = ApiAnalytics(TOKEN)
     # obj.get_posts_by_profile(profile, None, params)
+
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
+def syncAllProfileAndPost():
+    syncProfiles()
+    syncAllProfilesPost()
