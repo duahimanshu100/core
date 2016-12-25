@@ -25,7 +25,7 @@ SECRET_KEY = 'd+=-m+3zfjm1kod-e@eh_6w!=ai8@o=im6ng*(@cml@*c&vz0u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -78,10 +78,10 @@ WSGI_APPLICATION = 'analytics.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'analytics_db',
-        'USER': 'analytics_user',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',   # Or an IP Address that your DB is hosted on
+        'NAME': 'InstaAnalyse',
+        'USER': 'insta_poletus',
+        'PASSWORD': 'insta_poletus',
+        'HOST': 'instaanalyse.c7vcwu8nyv7w.ap-south-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
         'PORT': '5432',
     }
 }
