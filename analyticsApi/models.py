@@ -138,7 +138,7 @@ class PostMetric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.post_id)
+        return str(self.post_id) +'--' + str(self.like_count)+'--' + str(self.comment_count)+'--' + str(self.share_count)+'--' + str(self.engagement_count)
 
 class PostHashTag(models.Model):
     '''
