@@ -56,16 +56,12 @@ class JsonAnalytics:
                     'attributes']['fields'].pop('post.creation_date')
 
                 metrics = result['attributes']['metrics']
-                result['attributes']['fields']['engagement_total'] = metrics[
-                    'post.engagement_total'] if metrics['post.engagement_total'] else 0
-                result['attributes']['fields']['likes_count'] = metrics[
-                    'post.likes_count'] if metrics['post.likes_count'] else 0
-                result['attributes']['fields'][
-                    'replies_count'] = metrics['post.replies_count'] if metrics['post.replies_count'] else 0
                 result['attributes']['fields'][
                     'shares_count'] = metrics['post.shares_count'] if metrics['post.shares_count'] else 0
 
                 lst_json.append(result['attributes']['fields'])
+                import pdb
+                pdb.set_trace()
 
             #     Creating hashtags list
                 if(result['attributes']['fields']['post_hash']):
@@ -74,11 +70,13 @@ class JsonAnalytics:
                 if (result['attributes']['fields']['post_filter']):
                     filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
             # Creating Metrics Count
-                metrics_count.append({'like_count': result['attributes']['fields']['likes_count'],
+                metrics_count.append({'like_count': metrics['post.likes_count'] if metrics['post.likes_count'] else 0,
                                     'is_latest' : True,
                                     'profile_id': result['attributes']['fields']['profile_id'],
-                                    'comment_count': result['attributes']['fields']['replies_count'],
-                                    'share_count': result['attributes']['fields']['shares_count'],
+                                    'comment_count': metrics['post.replies_count'] if metrics['post.replies_count'] else 0,
+                                    'share_count': metrics['post.shares_count'] if metrics['post.shares_count'] else 0,
+                                    'engagement_count': metrics['post.engagement_total'] if metrics['post.engagement_total'] else 0,
+                                    'dislike_count': metrics['post.dislikes_count'] if metrics['post.dislikes_count'] else 0,
                                     'post_id_id': result['attributes']['fields']['post_id']})
 
             except (KeyError, TypeError) as tp:

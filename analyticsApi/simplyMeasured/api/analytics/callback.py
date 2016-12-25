@@ -40,13 +40,9 @@ class AnalyticsCallback:
         post_ids = [i['post_id'] for i in post_json]
 
         PostMetric.objects.filter(post_id__in= post_ids,is_latest=True).update(is_latest=False)
-        # PostShare.objects.filter(post_id__in=post_ids, is_latest=True).update(is_latest=False)
-        # PostComment.objects.filter(post_id__in=post_ids, is_latest=True).update(is_latest=False)
 
-
+        # Saving all the metrics
         PostMetric.objects.bulk_create([PostMetric(**i) for i in metrics_json])
-        # PostShare.objects.bulk_create([PostShare(**i) for i in shares_json])
-        # PostComment.objects.bulk_create([PostComment(**i) for i in replies_json])
         print('Finished  Saving Posts & Related Data at ' + str(datetime.now()))
         # print(post_json)
         # import pdb

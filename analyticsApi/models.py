@@ -132,6 +132,8 @@ class PostMetric(models.Model):
     like_count = models.BigIntegerField(default=0)
     comment_count = models.BigIntegerField(default=0)
     share_count = models.BigIntegerField(default=0)
+    engagement_count = models.BigIntegerField(default=0)
+    dislike_count = models.BigIntegerField(default=0)
     is_latest = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
