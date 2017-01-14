@@ -42,7 +42,7 @@ def syncAllProfilesPost():
     TOKEN = api_token.get_api_token()
     for profile in Profile.objects.filter(is_active=True):
         print('Profile Id Sync Starts for ' + str(profile.id) + ' at ' + str(datetime.now()))
-        syncProfilePosts.delay(profile, TOKEN)
+        syncProfilePosts.delay(profile.profile_id, profile.sm_account.sm_id, TOKEN)
         print('Profile Id Sync Completed for ' + str(profile.id) + ' at ' + str(datetime.now()))
 
 
@@ -80,13 +80,13 @@ def syncProfileLikes(profile):
         print('Token Not Found')
 
 @shared_task
-def syncProfilePosts(profile, TOKEN):
+def syncProfilePosts(profile_id, sm_id, TOKEN):
     '''
     syncProfilePosts will create or update the posts
     of simply measured  associated with the token and profile
     '''
     params = {'filter': [
-        'author.id.eq(' + str(profile.profile_id) + ')'],
+        'author.id.eq(' + str(profile_id) + ')'],
         'limit': 1000,
         'fields': 'post.url,post.target_url,post.sentiment,post.primary_content_type,post.language,post.province,post.is_brand,post.image_urls,post.distribution_type,post.country,data_source_id,datarank,channel,author.profile_link,author.image_url,author.display_name,post.geo,post.hashtags,post.instagram.image_filter,post.body,post.id,post.content_types,post.creation_date,author.id',
         'metrics': 'post.replies_count,post.shares_count,post.likes_count,post.engagement_total,post.dislikes_count'
@@ -96,7 +96,7 @@ def syncProfilePosts(profile, TOKEN):
     if (TOKEN):
         obj = ApiAnalytics(TOKEN)
         # print(params)
-        obj.get_posts(profile.sm_account.sm_id, params)
+        obj.get_posts(sm_id, params)
     else:
         print('Token Not Found')
 
