@@ -40,10 +40,13 @@ def syncAllProfilesPost():
     '''
     api_token = ApiToken()
     TOKEN = api_token.get_api_token()
+    count = 0
     for profile in Profile.objects.filter(is_active=True):
+        count = count + 1
         print('Profile Id Sync Starts for ' + str(profile.id) + ' at ' + str(datetime.now()))
         syncProfilePosts(profile, TOKEN)
         print('Profile Id Sync Completed for ' + str(profile.id) + ' at ' + str(datetime.now()))
+        print('Count is ' + str(count))
 
 
 def syncAllProfilesLikes():
