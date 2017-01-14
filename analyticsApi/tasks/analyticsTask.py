@@ -42,7 +42,7 @@ def syncAllProfilesPost():
     TOKEN = api_token.get_api_token()
     for profile in Profile.objects.filter(is_active=True):
         print('Profile Id Sync Starts for ' + str(profile.id) + ' at ' + str(datetime.now()))
-        syncProfilePosts(profile, TOKEN)
+        syncProfilePosts.delay(profile, TOKEN)
         print('Profile Id Sync Completed for ' + str(profile.id) + ' at ' + str(datetime.now()))
 
 
@@ -79,7 +79,7 @@ def syncProfileLikes(profile):
     else:
         print('Token Not Found')
 
-
+@shared_task
 def syncProfilePosts(profile, TOKEN):
     '''
     syncProfilePosts will create or update the posts
