@@ -72,6 +72,7 @@ class JsonAnalytics:
             # Creating Metrics Count
                 metrics_count.append({'like_count': metrics['post.likes_count'] if metrics['post.likes_count'] else 0,
                                     'is_latest' : True,
+                                    'post_content_type' : result['attributes']['fields']['primary_content_type'],
                                     'profile_id': result['attributes']['fields']['profile_id'],
                                     'comment_count': metrics['post.replies_count'] if metrics['post.replies_count'] else 0,
                                     'share_count': metrics['post.shares_count'] if metrics['post.shares_count'] else 0,

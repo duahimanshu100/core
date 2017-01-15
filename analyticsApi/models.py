@@ -135,6 +135,8 @@ class PostMetric(models.Model):
     engagement_count = models.BigIntegerField(default=0)
     dislike_count = models.BigIntegerField(default=0)
     is_latest = models.BooleanField(default=False)
+    post_content_type = models.CharField(
+        max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
