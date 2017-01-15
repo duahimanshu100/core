@@ -2,7 +2,7 @@ from django.conf.urls import url
 from analyticsApi.api.post import PostListApi, PostHistoryListApi
 from analyticsApi.api.post import PostFilterUsageApi, PostDistributionApi, PostTagRepartitionApi
 from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi
-from analyticsApi.api.engagement import PostMetricListApi
+from analyticsApi.api.engagement import PostMetricListApi,ProfileLikeHistoryApi,ProfileCommentHistoryApi
 
 urlpatterns = [
     url(r'^(?i)api/(?P<profile_id>.+)/Posts$', PostListApi.as_view()),
@@ -23,6 +23,10 @@ urlpatterns = [
 
     url(r'^(?i)api/(?P<profile_id>.+)/Posts/engagement/PostMetric$',
         PostMetricListApi.as_view()),
+    url(r'^(?i)api/(?P<profile_id>.+)/Posts/engagement/ProfileLikeHistory$',
+        ProfileLikeHistoryApi.as_view()),
+    url(r'^(?i)api/(?P<profile_id>.+)/Posts/engagement/ProfileCommentHistory$',
+        ProfileCommentHistoryApi.as_view()),
 
 
 
