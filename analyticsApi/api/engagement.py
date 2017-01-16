@@ -115,3 +115,52 @@ class RecentPostApi(generics.ListAPIView):
         # serializer = PostMetricSerializer(post_metrics, many=True)
         # return Response(serializer.data
         return Response(queryset)
+
+
+class OperationPostApi(generics.ListAPIView):
+    '''
+    Most and least like
+    '''
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def get_queryset(self):
+        profile_id = self.kwargs['profile_id']
+        queryset = self.model.objects.filter(
+            profile_id=profile_id)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        dic_of_operations = {
+            'like': 'like_count',
+            'comment': 'comment_count',
+            'share': 'share_count',
+            'engagement': 'engagement_count',
+            'dislike': 'dislike_count'
+        }
+        operation = dic_of_operations.get(
+            self.request.query_params.get('operation', 'like'), 'like')
+        limit_by = int(self.request.query_params.get('limit_by', 5))
+        type_of_recent = int(
+            self.request.query_params.get('type_of_recent', 'most'))
+        queryset = self.get_queryset()
+        # 2016-12-02T17:00:25.910711
+        # from_date = self.request.query_params.get('from_date', None)
+        # to_date = self.request.query_params.get('to_date', None)
+        # filter = self.request.query_params.get('filter', None)
+
+        # if from_date:
+        #     from_date = dateutil.parser.parse(from_date)
+        #     queryset = queryset.filter(created_at__gte=from_date)
+        # if to_date:
+        #     to_date = dateutil.parser.parse(to_date)
+        #     queryset = queryset.filter(created_at__lte=to_date)
+
+        # if filter:
+        #     queryset = queryset.filter(primary_content_type=filter)
+
+        order_by_type = '-' if type_of_recent == 'most' else ''
+        queryset = queryset.order_by(order_by_type + operation)[:limit_by]
+        return Response(queryset)
+
