@@ -75,7 +75,7 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
             cursor.close()
 
 
-class MostRecentPostApi(generics.ListAPIView):
+class RecentPostApi(generics.ListAPIView):
     '''
     List post and post count by profile
     '''
@@ -91,6 +91,8 @@ class MostRecentPostApi(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         limit_by = int(self.request.query_params.get('limit_by', 5))
+        type_of_recent = int(
+            self.request.query_params.get('type_of_recent', 'most'))
         queryset = self.get_queryset()
         # 2016-12-02T17:00:25.910711
         from_date = self.request.query_params.get('from_date', None)
@@ -107,7 +109,8 @@ class MostRecentPostApi(generics.ListAPIView):
         if filter:
             queryset = queryset.filter(primary_content_type=filter)
 
-        queryset = queryset.order_by('-created_at')[:limit_by]
+        order_by_type = '-' if type_of_recent == 'most' else ''
+        queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
         # post_metrics = PostMetric.objects(post_id__in=queryset, is_latest=True)
         # serializer = PostMetricSerializer(post_metrics, many=True)
         # return Response(serializer.data
