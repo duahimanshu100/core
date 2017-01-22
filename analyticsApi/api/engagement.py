@@ -1,5 +1,5 @@
 import dateutil.parser
-from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer
+from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer
 from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.response import Response
@@ -46,7 +46,7 @@ class ProfileLikeHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) as like_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE cast("analyticsApi_postmetric"."profile_id" as bigint) = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -64,8 +64,11 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
     model = serializer_class.Meta.model
     paginate_by = 100
 
+    def get_queryset(self):
+        return []
+
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) as comment_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, comment_count FROM public."analyticsApi_postmetric" WHERE cast("analyticsApi_postmetric"."profile_id" as bigint) = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, comment_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -90,9 +93,8 @@ class RecentPostApi(generics.ListAPIView):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        limit_by = int(self.request.query_params.get('limit_by', 5))
-        type_of_recent = int(
-            self.request.query_params.get('type_of_recent', 'most'))
+        limit_by = int(self.request.query_params.get('limit', 5))
+        type_of_recent = self.request.query_params.get('order', 'most')
         queryset = self.get_queryset()
         # 2016-12-02T17:00:25.910711
         from_date = self.request.query_params.get('from_date', None)
@@ -112,9 +114,9 @@ class RecentPostApi(generics.ListAPIView):
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
         # post_metrics = PostMetric.objects(post_id__in=queryset, is_latest=True)
-        # serializer = PostMetricSerializer(post_metrics, many=True)
+        serializer = PostsListSerializer(queryset, many=True)
         # return Response(serializer.data
-        return Response(queryset)
+        return Response(serializer.data)
 
 
 class OperationPostApi(generics.ListAPIView):
@@ -140,10 +142,10 @@ class OperationPostApi(generics.ListAPIView):
             'dislike': 'dislike_count'
         }
         operation = dic_of_operations.get(
-            self.request.query_params.get('operation', 'like'), 'like')
-        limit_by = int(self.request.query_params.get('limit_by', 5))
-        type_of_recent = int(
-            self.request.query_params.get('type_of_recent', 'most'))
+            self.request.query_params.get('type', 'like'), 'like')
+        limit_by = int(self.request.query_params.get('limit', 5))
+        type_of_recent = self.request.query_params.get(
+            'order', 'most')
         queryset = self.get_queryset()
         # 2016-12-02T17:00:25.910711
         # from_date = self.request.query_params.get('from_date', None)
@@ -162,30 +164,8 @@ class OperationPostApi(generics.ListAPIView):
 
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
-        return Response(queryset)
-
-
-class FilterImpactLikeApi(generics.ListAPIView):
-    '''
-    Filter impact on like
-    '''
-
-    def get_queryset(self):
-        return []
-
-    serializer_class = PostMetricSerializer
-    model = serializer_class.Meta.model
-    paginate_by = 100
-
-    def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) as like_count FROM (  SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE cast("analyticsApi_postmetric"."profile_id" as bigint) = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            result = Utility.dictfetchall(cursor)
-            return Response(result)
-        finally:
-            cursor.close()
+        serializer = PostWithMetricSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class FilterImpactCommentApi(generics.ListAPIView):
@@ -201,7 +181,61 @@ class FilterImpactCommentApi(generics.ListAPIView):
     paginate_by = 100
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE cast(pf.profile_id as bigint) = %s AND post.primary_content_type = 'video' GROUP BY pf.name'''
+        # TODO Add Date Range Filter & Content Type Filter
+        sql = '''SELECT pf.name, SUM(comment_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s AND post.primary_content_type = 'video' GROUP BY pf.name'''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
+
+
+class FilterImpactLikeApi(generics.ListAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        return []
+
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def list(self, request, *args, **kwargs):
+        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s AND post.primary_content_type = 'video' GROUP BY pf.name'''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
+
+
+class HashtagPerformanceApi(generics.ListAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        return []
+
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def list(self, request, *args, **kwargs):
+        dic_of_operations = {
+            'like': 'like_count',
+            'comment': 'comment_count',
+            'engagement': 'engagement_count'
+        }
+        operation = dic_of_operations.get(
+            self.request.query_params.get('type', 'engagement'), 'like_count')
+        sql = '''SELECT ph.name, SUM(pm.''' + operation + ''') as ''' + operation + ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=ph.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE ph.profile_id = %s AND post.primary_content_type = 'video' GROUP BY ph.name ORDER BY ''' + operation + ''' DESC'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
