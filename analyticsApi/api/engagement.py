@@ -25,6 +25,19 @@ class PostMetricListApi(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        filter = self.request.query_params.get('filter', None)
+
+        if from_date:
+            from_date = dateutil.parser.parse(from_date)
+            queryset = queryset.filter(post__created_at__gte=from_date)
+        if to_date:
+            to_date = dateutil.parser.parse(to_date)
+            queryset = queryset.filter(post__created_at__lte=to_date)
+
+        if filter:
+            queryset = queryset.filter(post__primary_content_type=filter)
 
         queryset = queryset.aggregate(avg_like=Avg('like_count'),
                                       avg_comment=Avg('comment_count'),
@@ -113,7 +126,8 @@ class RecentPostApi(generics.ListAPIView):
 
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
-        # post_metrics = PostMetric.objects(post_id__in=queryset, is_latest=True)
+        # post_metrics = PostMetric.objects(post_id__in=queryset,
+        # is_latest=True)
         serializer = PostsListSerializer(queryset, many=True)
         # return Response(serializer.data
         return Response(serializer.data)
@@ -148,19 +162,19 @@ class OperationPostApi(generics.ListAPIView):
             'order', 'most')
         queryset = self.get_queryset()
         # 2016-12-02T17:00:25.910711
-        # from_date = self.request.query_params.get('from_date', None)
-        # to_date = self.request.query_params.get('to_date', None)
-        # filter = self.request.query_params.get('filter', None)
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        filter = self.request.query_params.get('filter', None)
 
-        # if from_date:
-        #     from_date = dateutil.parser.parse(from_date)
-        #     queryset = queryset.filter(created_at__gte=from_date)
-        # if to_date:
-        #     to_date = dateutil.parser.parse(to_date)
-        #     queryset = queryset.filter(created_at__lte=to_date)
+        if from_date:
+            from_date = dateutil.parser.parse(from_date)
+            queryset = queryset.filter(post__created_at__gte=from_date)
+        if to_date:
+            to_date = dateutil.parser.parse(to_date)
+            queryset = queryset.filter(post__created_at__lte=to_date)
 
-        # if filter:
-        #     queryset = queryset.filter(primary_content_type=filter)
+        if filter:
+            queryset = queryset.filter(post__primary_content_type=filter)
 
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
@@ -181,8 +195,14 @@ class FilterImpactCommentApi(generics.ListAPIView):
     paginate_by = 100
 
     def list(self, request, *args, **kwargs):
-        # TODO Add Date Range Filter & Content Type Filter
-        sql = '''SELECT pf.name, SUM(comment_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s AND post.primary_content_type = 'video' GROUP BY pf.name'''
+        filter = self.request.query_params.get('filter', None)
+        sql_filter = ''
+        if filter:
+            if filter == 'video':
+                sql_filter = " AND post.primary_content_type = 'photo' "
+            else:
+                sql_filter = " AND post.primary_content_type = 'video' "
+        sql = '''SELECT pf.name, SUM(comment_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s ''' + sql_filter + ''' GROUP BY pf.name'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -205,7 +225,15 @@ class FilterImpactLikeApi(generics.ListAPIView):
     paginate_by = 100
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s AND post.primary_content_type = 'video' GROUP BY pf.name'''
+        filter = self.request.query_params.get('filter', None)
+        sql_filter = ''
+        if filter:
+            if filter == 'video':
+                sql_filter = " AND post.primary_content_type = 'photo' "
+            else:
+                sql_filter = " AND post.primary_content_type = 'video' "
+
+        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s '''  + sql_filter +   '''' GROUP BY pf.name'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -235,7 +263,18 @@ class HashtagPerformanceApi(generics.ListAPIView):
         }
         operation = dic_of_operations.get(
             self.request.query_params.get('type', 'engagement'), 'like_count')
-        sql = '''SELECT ph.name, SUM(pm.''' + operation + ''') as ''' + operation + ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=ph.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE ph.profile_id = %s AND post.primary_content_type = 'video' GROUP BY ph.name ORDER BY ''' + operation + ''' DESC'''
+
+        filter = self.request.query_params.get('filter', None)
+        sql_filter = ''
+        if filter:
+            if filter == 'video':
+                sql_filter = " AND post.primary_content_type = 'photo' "
+            else:
+                sql_filter = " AND post.primary_content_type = 'video' "
+
+        sql = '''SELECT ph.name, SUM(pm.''' + operation + ''') as ''' + operation + \
+            ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=ph.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE ph.profile_id = %s ''' + \
+            sql_filter + '''GROUP BY ph.name ORDER BY ''' + operation + ''' DESC'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
