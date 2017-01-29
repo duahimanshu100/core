@@ -18,4 +18,3 @@ build/
 tests/report/
 venv/
 analyticsApi/migrations/*
-analytics/settings.py
