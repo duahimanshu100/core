@@ -233,7 +233,7 @@ class FilterImpactLikeApi(generics.ListAPIView):
             else:
                 sql_filter = " AND post.primary_content_type = 'video' "
 
-        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s '''  + sql_filter +   '''' GROUP BY pf.name'''
+        sql = '''SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) WHERE pf.profile_id = %s '''  + sql_filter +   ''' GROUP BY pf.name'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
