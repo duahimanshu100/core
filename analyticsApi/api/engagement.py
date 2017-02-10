@@ -161,6 +161,7 @@ class OperationPostApi(generics.ListAPIView):
         type_of_recent = self.request.query_params.get(
             'order', 'most')
         queryset = self.get_queryset()
+        queryset = queryset.filter(is_latest=True)
         # 2016-12-02T17:00:25.910711
         from_date = self.request.query_params.get('from_date', None)
         to_date = self.request.query_params.get('to_date', None)
