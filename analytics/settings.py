@@ -38,10 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'analyticsApi',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -78,10 +80,10 @@ WSGI_APPLICATION = 'analytics.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'InstaAnalyse',
-        'USER': 'insta_poletus',
-        'PASSWORD': 'insta_poletus',
-        'HOST': 'instaanalyse.c7vcwu8nyv7w.ap-south-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
+        'NAME': 'instapoletusdb',
+        'USER': 'instapoletusdb',
+        'PASSWORD': 'instapoletusdb',
+        'HOST': 'instapoletusdb.citdu0zqfkwk.ap-south-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
         'PORT': '5432',
     }
 }
@@ -132,3 +134,5 @@ CELERY_TASK_SERIALIZER = 'json'
 
 
 CELERY_IMPORTS = ('analyticsApi.tasks.analyticsTask')
+
+CORS_ORIGIN_ALLOW_ALL = True
