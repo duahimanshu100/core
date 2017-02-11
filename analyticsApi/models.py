@@ -86,6 +86,18 @@ class Profile(models.Model):
         return str(self.profile_id) + ' - ' + self.display_name
 
 
+class ProfileMetric(models.Model):
+    '''
+    Profile Metric table
+    '''
+    profile_id = models.CharField(max_length=200)
+    audience_count = models.BigIntegerField(default=0)
+    is_latest = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.profile_id) +'--' + str(self.audience_count)
+
 class Post(models.Model):
     '''
     Simply Measured Profiles

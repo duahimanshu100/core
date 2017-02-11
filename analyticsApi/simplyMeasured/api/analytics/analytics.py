@@ -62,7 +62,6 @@ class ApiAnalytics(ApiSimplyMeasured):
         self.url = self.url + sm_account_id + '/profiles'
         self.payload['filter'] = 'channel.eq(' + channel_type + ')'
         self.payload['limit'] = 1000
-        # TODO add paging
         if profile_id:
             # TODO self.payload['filter'] = 'channel.eq(' + channel_type + ')'
             pass
