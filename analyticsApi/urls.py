@@ -3,7 +3,7 @@ from analyticsApi.api.post import PostListApi, PostHistoryListApi
 from analyticsApi.api.post import PostFilterUsageApi, PostDistributionApi, PostTagRepartitionApi
 from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi
 from analyticsApi.api.engagement import PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi
-
+from analyticsApi.api.profile import ProfileDetail,ProfileAudiencApi
 urlpatterns = [
     url(r'^(?i)api/(?P<profile_id>.+)/Posts$', PostListApi.as_view()),
 
@@ -39,5 +39,10 @@ urlpatterns = [
         FilterImpactCommentApi.as_view()),
     url(r'^(?i)api/(?P<profile_id>.+)/Posts/engagement/HashtagPerformanceApi$',
         HashtagPerformanceApi.as_view()),
+
+    url(r'^(?i)api/Profile/(?P<profile_id>.+)$',
+        ProfileDetail.as_view()),
+    url(r'^(?i)api/(?P<profile_id>.+)/Profile/ProfileAudiencApi$',
+        ProfileAudiencApi.as_view()),
 
 ]
