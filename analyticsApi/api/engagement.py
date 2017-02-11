@@ -126,10 +126,9 @@ class RecentPostApi(generics.ListAPIView):
 
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
-        # post_metrics = PostMetric.objects(post_id__in=queryset,
-        # is_latest=True)
-        serializer = PostsListSerializer(queryset, many=True)
-        # return Response(serializer.data
+        post_metrics = PostMetric.objects.filter(
+            post_id__in=queryset, is_latest=True)
+        serializer = PostWithMetricSerializer(post_metrics, many=True)
         return Response(serializer.data)
 
 
