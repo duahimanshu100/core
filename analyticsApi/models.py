@@ -96,7 +96,8 @@ class ProfileMetric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.profile_id) +'--' + str(self.audience_count)
+        return str(self.profile_id) + '--' + str(self.audience_count)
+
 
 class Post(models.Model):
     '''
@@ -152,7 +153,8 @@ class PostMetric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.post_id) +'--' + str(self.like_count)+'--' + str(self.comment_count)+'--' + str(self.share_count)+'--' + str(self.engagement_count)
+        return str(self.post_id) + '--' + str(self.like_count) + '--' + str(self.comment_count) + '--' + str(self.share_count) + '--' + str(self.engagement_count)
+
 
 class PostHashTag(models.Model):
     '''
@@ -191,18 +193,20 @@ class PostLike(models.Model):
     def __str__(self):
         return str(self.post_id)
 
+
 class PostComment(models.Model):
     '''
     Simply Measured Post Comments
     '''
     post_id = models.ForeignKey(Post, to_field='post_id')
-    comment_count = models.BigIntegerField( default=0)
-    comment_diff = models.BigIntegerField( default=0)
+    comment_count = models.BigIntegerField(default=0)
+    comment_diff = models.BigIntegerField(default=0)
     is_latest = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.post_id)
+
 
 class PostShare(models.Model):
     '''
@@ -217,6 +221,7 @@ class PostShare(models.Model):
     def __str__(self):
         return str(self.post_id)
 
+
 class ProfileLike(models.Model):
     '''
     Simply Measured Profile Likes
@@ -229,3 +234,17 @@ class ProfileLike(models.Model):
         return str(self.profile_id)
 
 
+class PostVision(models.Model):
+    '''
+    PostVision model for storing aws rekognition/google vision
+    '''
+    post = models.ForeignKey(Post, to_field='post_id')
+    google_image_properties_annotation = JSONField(null=True, blank=True)
+    google_label_annotation = JSONField(null=True, blank=True)
+    google_face_annotation = JSONField(null=True, blank=True)
+    aws_detect_faces = JSONField(null=True, blank=True)
+    aws_detect_labels = JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.post_id)

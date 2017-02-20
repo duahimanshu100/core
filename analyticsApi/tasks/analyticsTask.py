@@ -1,8 +1,8 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric
-from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer,ProfileMetricSerializer
+from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision
+from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer, ProfileMetricSerializer
 from analyticsApi.simplyMeasured.api.analytics.analytics import ApiAnalytics
 from analyticsApi.utility import Utility
 from analyticsApi.simplyMeasured.api.token.token import ApiToken
@@ -28,8 +28,10 @@ def syncProfiles(is_hourly=False):
             ProfileSerializer, result, Profile, 'profile_id', 'profile_id')
         print(r)
         if is_hourly:
-            ProfileMetric.objects.filter(is_latest=True).update(is_latest=False)
-            Utility.save_and_update_data(ProfileMetricSerializer, result, ProfileMetric)
+            ProfileMetric.objects.filter(
+                is_latest=True).update(is_latest=False)
+            Utility.save_and_update_data(
+                ProfileMetricSerializer, result, ProfileMetric)
     else:
         print('Token Not Found')
 
@@ -126,3 +128,50 @@ def syncAllProfileAndPost():
 @periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
+
+
+def syncVision(posts):
+    from analyticsApi.vision import get_vision_results
+    for post in posts:
+        if post.image_urls:
+            google_vision, aws_vision = get_vision_results(post.image_urls[0])
+            syncVisionByPost(post, google_vision, aws_vision)
+
+
+def syncVisionByPost(post, google_vision, aws_vision):
+    post_vision = PostVision(post=post)
+    try:
+        google_image_properties_annotation = google_vision[
+            'responses'][0]['imagePropertiesAnnotation']
+    except (KeyError, IndexError):
+        google_image_properties_annotation = None
+
+    try:
+        google_label_annotation = google_vision[
+            'responses'][0]['labelAnnotations']
+    except (KeyError, IndexError):
+        google_label_annotation = None
+
+    try:
+        google_face_annotation = google_vision[
+            'responses'][0]['faceAnnotations']
+    except (KeyError, IndexError):
+        google_face_annotation = None
+
+    try:
+        aws_detect_faces = aws_vision['detect_faces']
+    except (KeyError, IndexError):
+        aws_detect_faces = None
+    try:
+        aws_detect_labels = aws_vision['detect_labels']
+    except (KeyError, IndexError):
+        aws_detect_labels = None
+
+    post_vision.google_face_annotation = google_face_annotation
+    post_vision.google_label_annotation = google_label_annotation
+    post_vision.google_image_properties_annotation = google_image_properties_annotation
+    post_vision.aws_detect_faces = aws_detect_faces
+    post_vision.aws_detect_labels = aws_detect_labels
+    post_vision.save()
+
+    # post_vision
