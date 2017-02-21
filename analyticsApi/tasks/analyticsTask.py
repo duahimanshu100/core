@@ -133,9 +133,17 @@ def syncAudienceCount():
 def syncVision(posts):
     from analyticsApi.vision import get_vision_results
     for post in posts:
+        print post.id
         if post.image_urls:
-            google_vision, aws_vision = get_vision_results(post.image_urls[0])
-            syncVisionByPost(post, google_vision, aws_vision)
+            try:
+                google_vision, aws_vision = get_vision_results(
+                    post.image_urls[0])
+                syncVisionByPost(post, google_vision, aws_vision)
+            except Exception as e:
+                import traceback
+                print(traceback.print_exc())
+                print 'ERROR in *****************'
+                print post
 
 
 def syncVisionByPost(post, google_vision, aws_vision):
