@@ -1,5 +1,5 @@
 import dateutil.parser
-from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer
+from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer, PostsListWithVisionSerializer
 from django.db.models import Case, When
 from django.db.models import Count
 from django.db.models import IntegerField, Sum
@@ -20,6 +20,17 @@ class PostListApi(generics.ListAPIView):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(profile_id=profile_id)
         return queryset.order_by('-created_at')
+
+
+class PostDetailApi(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PostsListWithVisionSerializer
+    model = serializer_class.Meta.model
+    lookup_field = 'post_id'
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        queryset = self.model.objects.filter(post_id=post_id)
+        return queryset
 
 
 class PostHistoryListApi(generics.ListAPIView):
@@ -238,8 +249,10 @@ class PostTagRepartitionApi(generics.ListAPIView):
 
         queryset['total'] = queryset['with_tag'] + queryset['without_tag']
         if queryset['total'] != 0:
-            queryset['without_tag_percent'] = round((queryset['without_tag'] / queryset['total']) * 100, 2)
-            queryset['with_tag_percent'] = round((queryset['with_tag'] / queryset['total']) * 100, 2)
+            queryset['without_tag_percent'] = round(
+                (queryset['without_tag'] / queryset['total']) * 100, 2)
+            queryset['with_tag_percent'] = round(
+                (queryset['with_tag'] / queryset['total']) * 100, 2)
         else:
             queryset['without_tag_percent'] = 0
             queryset['with_tag_percent'] = 0
