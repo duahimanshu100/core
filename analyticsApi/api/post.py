@@ -1,25 +1,43 @@
 import dateutil.parser
-from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer
+from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer, PostsListWithVisionSerializer
 from django.db.models import Case, When
 from django.db.models import Count
 from django.db.models import IntegerField, Sum
 from django.db.models.functions import Extract
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+
+class ResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
 
 
 class PostListApi(generics.ListAPIView):
     '''
     List all post associated by profile
     '''
-    serializer_class = PostsListSerializer
+    serializer_class = PostsListWithVisionSerializer
     model = serializer_class.Meta.model
-    paginate_by = 100
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(profile_id=profile_id)
         return queryset.order_by('-created_at')
+
+
+class PostDetailApi(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PostsListWithVisionSerializer
+    model = serializer_class.Meta.model
+    lookup_field = 'post_id'
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        queryset = self.model.objects.filter(post_id=post_id)
+        return queryset
 
 
 class PostHistoryListApi(generics.ListAPIView):
@@ -238,8 +256,10 @@ class PostTagRepartitionApi(generics.ListAPIView):
 
         queryset['total'] = queryset['with_tag'] + queryset['without_tag']
         if queryset['total'] != 0:
-            queryset['without_tag_percent'] = round((queryset['without_tag'] / queryset['total']) * 100, 2)
-            queryset['with_tag_percent'] = round((queryset['with_tag'] / queryset['total']) * 100, 2)
+            queryset['without_tag_percent'] = round(
+                (queryset['without_tag'] / queryset['total']) * 100, 2)
+            queryset['with_tag_percent'] = round(
+                (queryset['with_tag'] / queryset['total']) * 100, 2)
         else:
             queryset['without_tag_percent'] = 0
             queryset['with_tag_percent'] = 0

@@ -1,7 +1,7 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision
+from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post
 from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer, ProfileMetricSerializer
 from analyticsApi.simplyMeasured.api.analytics.analytics import ApiAnalytics
 from analyticsApi.utility import Utility
@@ -129,25 +129,16 @@ def syncAllProfileAndPost():
 def syncAudienceCount():
     syncProfiles()
 
+from analytics.celery import app
 
-def syncVision(posts):
+
+@app.task()
+def syncVisionByPost(post_id, post_image):
+    print("INTO THE SYNC FOR %s IMAGE(%s)" % (post_id, post_image))
     from analyticsApi.vision import get_vision_results
-    for post in posts:
-        print(post.id)
-        if post.image_urls:
-            try:
-                google_vision, aws_vision = get_vision_results(
-                    post.image_urls[0])
-                syncVisionByPost(post, google_vision, aws_vision)
-            except Exception as e:
-                import traceback
-                print(traceback.print_exc())
-                print('ERROR in *****************')
-                print(post)
-
-
-def syncVisionByPost(post, google_vision, aws_vision):
-    post_vision = PostVision(post=post)
+    google_vision, aws_vision = get_vision_results(
+        post_image)
+    post_vision = PostVision(post=Post.objects.get(post_id=post_id))
     try:
         google_image_properties_annotation = google_vision[
             'responses'][0]['imagePropertiesAnnotation']
@@ -183,3 +174,17 @@ def syncVisionByPost(post, google_vision, aws_vision):
     post_vision.save()
 
     # post_vision
+
+
+def syncVision(posts):
+    for post in posts:
+        print(post.id)
+        if post.image_urls:
+            try:
+                syncVisionByPost.delay(post.post_id, post.image_urls[0])
+                # syncVisionByPost(post, google_vision, aws_vision)
+            except Exception:
+                import traceback
+                print(traceback.print_exc())
+                print('ERROR in *****************')
+                print(post)

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Profile, Post, PostHashTag, PostFilter, ProfileLike, PostLike, PostShare, PostComment, PostMetric
+from .models import Profile, Post, PostHashTag, PostFilter, ProfileLike, PostLike, PostShare, PostComment, PostMetric, PostVision
 from .models import SmAccount, ProfileMetric
 from .models import SmDataSource
 
@@ -43,6 +43,7 @@ class PostHashTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostHashTag
         fields = '__all__'
+
 
 class PostLikeSerializer(serializers.ModelSerializer):
     '''
@@ -127,12 +128,13 @@ class PostSerializer(serializers.ModelSerializer):
             PostFilter.objects.create(profile_id=validated_data[
                 'profile_id'], post_id=post, name=post_filter)
 
-        self.update_counts(post,validated_data)
+        self.update_counts(post, validated_data)
 
         return post
 
     def update(self, instance, validated_data):
-        update_response = super(PostSerializer, self).update(instance, validated_data)
+        update_response = super(PostSerializer, self).update(
+            instance, validated_data)
         self.update_counts(instance, validated_data)
 
         return update_response
@@ -148,17 +150,21 @@ class PostSerializer(serializers.ModelSerializer):
         shares_count = validated_data.get('shares_count', 0)
         likes_count = validated_data.get('likes_count', 0)
         replies_count = validated_data.get('replies_count', 0)
-        like_diff = self.get_diff(instance, PostLike, '-created_at', likes_count, 'like_count') if likes_count else 0
+        like_diff = self.get_diff(
+            instance, PostLike, '-created_at', likes_count, 'like_count') if likes_count else 0
         share_diff = self.get_diff(instance, PostShare, '-created_at', shares_count,
                                    'share_count') if shares_count else 0
         comment_diff = self.get_diff(instance, PostComment, '-created_at', replies_count,
                                      'comment_count') if likes_count else 0
 
-        PostLike.objects.create(post_id=instance, like_count=likes_count, like_diff=like_diff)
+        PostLike.objects.create(
+            post_id=instance, like_count=likes_count, like_diff=like_diff)
 
-        PostShare.objects.create(post_id=instance, share_count=shares_count, share_diff=share_diff)
+        PostShare.objects.create(
+            post_id=instance, share_count=shares_count, share_diff=share_diff)
 
-        PostComment.objects.create(post_id=instance, comment_count=replies_count, comment_diff=comment_diff)
+        PostComment.objects.create(
+            post_id=instance, comment_count=replies_count, comment_diff=comment_diff)
 
     class Meta:
         model = Post
@@ -201,6 +207,36 @@ class PostsListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class PostsVisionSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for getting list of Posts
+    '''
+
+    class Meta:
+        model = PostVision
+        fields = '__all__'
+
+
+class PostsListWithVisionSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for getting list of Posts
+    '''
+    # post_vision = serializers.SerializerMethodField(read_only=True)
+    # post_vision = PostsVisionSerializer(read_only=True)
+
+    def to_representation(self, instance):
+        data = super(PostsListWithVisionSerializer,
+                     self).to_representation(instance)
+        post_vision = PostVision.objects.filter(post=instance)
+        if post_vision:
+            data['post_vision'] = PostsVisionSerializer(post_vision[0]).data
+        return data
+
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
 class PostsFilterUsageSerializer(serializers.ModelSerializer):
     '''
         Serializer for getting list of Posts
@@ -220,6 +256,7 @@ class PostsTagUsageSerializer(serializers.ModelSerializer):
         model = PostHashTag
         fields = '__all__'
 
+
 class PostSerializerCreate(serializers.ModelSerializer):
     '''
         Serializer for SmAccount model
@@ -227,4 +264,3 @@ class PostSerializerCreate(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = '__all__'
-
