@@ -17,4 +17,6 @@ tests/.coverage
 build/
 tests/report/
 venv/
+celery_beat.log
+celery_worker.log
 analyticsApi/migrations/*
