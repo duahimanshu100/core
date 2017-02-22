@@ -12,7 +12,7 @@ class PostListApi(generics.ListAPIView):
     '''
     List all post associated by profile
     '''
-    serializer_class = PostsListSerializer
+    serializer_class = PostsListWithVisionSerializer
     model = serializer_class.Meta.model
     paginate_by = 100
 
