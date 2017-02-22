@@ -6,6 +6,13 @@ from django.db.models import IntegerField, Sum
 from django.db.models.functions import Extract
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+
+class ResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
 
 
 class PostListApi(generics.ListAPIView):
@@ -14,7 +21,7 @@ class PostListApi(generics.ListAPIView):
     '''
     serializer_class = PostsListWithVisionSerializer
     model = serializer_class.Meta.model
-    paginate_by = 100
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
