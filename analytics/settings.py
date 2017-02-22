@@ -80,10 +80,11 @@ WSGI_APPLICATION = 'analytics.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'him',
-        'USER': 'him',
-        'PASSWORD': 'him',
-        'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
+        'NAME': 'instapoletusdb',
+        'USER': 'instapoletusdb',
+        'PASSWORD': 'instapoletusdb',
+        # Or an IP Address that your DB is hosted on
+        'HOST': 'instapoletusdb.citdu0zqfkwk.ap-south-1.rds.amazonaws.com',
         'PORT': '5432',
     }
 }
