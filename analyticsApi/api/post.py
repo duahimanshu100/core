@@ -49,7 +49,7 @@ class PostListApiV2(generics.ListAPIView):
             sort_type = ''
         sort_field = self.request.query_params.get('sort_field', '')
         if sort_field:
-            return queryset.order_by(sort_type + 'sort_field')
+            return queryset.order_by(sort_type + sort_field)
         else:
             return queryset.order_by(sort_type + 'post_id__created_at')
 
