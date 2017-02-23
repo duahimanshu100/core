@@ -1,11 +1,13 @@
 from django.conf.urls import url
 from analyticsApi.api.post import PostListApi, PostHistoryListApi
 from analyticsApi.api.post import PostFilterUsageApi, PostDistributionApi, PostTagRepartitionApi, PostDetailApi
-from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi
+from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi, PostListApiV2
 from analyticsApi.api.engagement import PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi
 from analyticsApi.api.profile import ProfileDetail, ProfileAudiencApi
 urlpatterns = [
     url(r'^(?i)api/(?P<profile_id>.+)/Posts$', PostListApi.as_view()),
+
+    url(r'^(?i)api/(?P<profile_id>.+)/Posts/v2$', PostListApiV2.as_view()),
     url(r'^(?i)api/Posts/(?P<post_id>.+)$', PostDetailApi.as_view()),
 
     url(r'^(?i)api/(?P<profile_id>.+)/Posts/History$',

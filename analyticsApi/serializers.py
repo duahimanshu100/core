@@ -76,6 +76,17 @@ class PostWithMetricSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class PostMetricSerializerV2(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    class Meta:
+        model = PostMetric
+        fields = '__all__'
+        depth = 1
+
+
 class PostShareSerializer(serializers.ModelSerializer):
     '''
         Serializer for Post Ha  shtag model
