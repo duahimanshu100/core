@@ -43,7 +43,8 @@ class PostListApiV2(generics.ListAPIView):
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
-        queryset = self.model.objects.filter(profile_id=profile_id)
+        queryset = self.model.objects.filter(
+            profile_id=profile_id, is_latest=True)
         sort_type = self.request.query_params.get('sort', '-')
         if sort_type == 'ASC':
             sort_type = ''

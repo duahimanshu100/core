@@ -9,6 +9,84 @@ from django.db import connection
 from django.db.models import Max
 
 
+class EngagementAverageApi(generics.ListAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        return []
+
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+
+    def list(self, request, *args, **kwargs):
+        sql = '''SELECT pm.engagement_count, CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer END AS "HOUR_OF_POSTING", post.created_at::time, EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) WHERE pm.is_latest=True AND post.profile_id = %s '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            arr = []
+            for i in range(24):
+                for j in range(7):
+                    arr.append([i, j, 0, 0])
+
+            for row in cursor.fetchall():
+                tmp_hour = row[1]
+                tmp_day = row[3]
+                if(tmp_hour == 24):
+                    tmp_hour = 0
+                    tmp_day += 1
+                    if(tmp_day == 7):
+                        tmp_day = 0
+                arr[tmp_hour * 7 + tmp_day][2] += 1
+                arr[tmp_hour * 7 + tmp_day][3] += row[0]
+            for elem in arr:
+                tmp = 0
+                if elem[2]:
+                    tmp = round(elem[3] / elem[2])
+                elem.pop()
+                elem.pop()
+                elem.append(tmp)
+            return Response(arr)
+        finally:
+            cursor.close()
+
+
+class EngagementFrequencyApi(generics.ListAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        return []
+
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+
+    def list(self, request, *args, **kwargs):
+        sql = '''SELECT pm.engagement_count, CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer END AS "HOUR_OF_POSTING", post.created_at::time, EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) WHERE pm.is_latest=True AND post.profile_id = %s '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            arr = []
+            for i in range(24):
+                for j in range(7):
+                    arr.append([i, j, 0])
+
+            for row in cursor.fetchall():
+                tmp_hour = row[1]
+                tmp_day = row[3]
+                if(tmp_hour == 24):
+                    tmp_hour = 0
+                    tmp_day += 1
+                    if(tmp_day == 7):
+                        tmp_day = 0
+                arr[tmp_hour * 7 + tmp_day][2] += 1
+            return Response(arr)
+        finally:
+            cursor.close()
+
+
 class PostMetricListApi(generics.ListAPIView):
     '''
     List post and post count by profile
