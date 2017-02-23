@@ -26,7 +26,11 @@ class PostListApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(profile_id=profile_id)
-        return queryset.order_by('-created_at')
+        sort_type = self.request.query_params.get('sort', '-')
+        if sort_type == 'ASC':
+            sort_type = ''
+        # sort_field = self.request.query_params.get('sort_field', '-')
+        return queryset.order_by(sort_type + 'created_at')
 
 
 class PostDetailApi(generics.RetrieveUpdateDestroyAPIView):
