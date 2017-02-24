@@ -1,5 +1,5 @@
 import dateutil.parser
-from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer
+from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer
 from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.response import Response
@@ -353,6 +353,33 @@ class HashtagPerformanceApi(generics.ListAPIView):
         sql = '''SELECT ph.name, SUM(pm.''' + operation + ''') as ''' + operation + \
             ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=ph.post_id_id AND pm.is_latest = TRUE ) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE ph.profile_id = %s ''' + \
             sql_filter + '''GROUP BY ph.name ORDER BY ''' + operation + ''' DESC'''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
+
+
+class FilterEngagementPostApi(generics.ListAPIView):
+    '''
+    FilterEngagementPostApi
+    '''
+    serializer_class = PostFilterSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        return []
+
+    def list(self, request, *args, **kwargs):
+        sql = '''
+        SELECT pf.name, sum(pm.engagement_count) as s_e_c 
+        FROM public."analyticsApi_postfilter" pf 
+        LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = True)
+        WHERE pf.profile_id = %s GROUP BY pf.name
+        ORDER BY s_e_C DESC
+        '''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
