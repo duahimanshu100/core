@@ -411,10 +411,20 @@ class Hour24EngagementApi(generics.ListAPIView):
             'dislike': 'dislike_count'
         }
         operation = dic_of_operations.get(
-            self.request.query_params.get('type', 'like'), 'like_count')
+            self.request.query_params.get(' ', 'like'), 'like_count')
         limit_by = int(self.request.query_params.get('limit', 24))
         queryset = self.get_queryset()
 
         queryset = queryset.order_by('-created_at')[:limit_by]
         serializer = PostMetricSerializer(queryset, many=True)
-        return Response(serializer.data)
+        last_entity = 0
+        serialized_data = serializer.data
+        result_delta = []
+        count = 1
+        for data in reversed(serialized_data):
+            data['delta'] = data[operation] - last_entity
+            last_entity = data[operation]
+            result_delta.append((count, data['delta']))
+            count = count + 1
+
+        return Response(result_delta)
