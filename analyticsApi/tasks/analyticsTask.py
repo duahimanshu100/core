@@ -125,7 +125,7 @@ def syncAllProfileAndPost():
     syncAllProfilesPost()
 
 
-@periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)
+@periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
 
