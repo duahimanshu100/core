@@ -387,3 +387,34 @@ class FilterEngagementPostApi(generics.ListAPIView):
             return Response(result)
         finally:
             cursor.close()
+
+
+class Hour24EngagementApi(generics.ListAPIView):
+    '''
+    Hour24EngagementApi impact on like
+    '''
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        queryset = self.model.objects.filter(
+            post_id_id=post_id)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        dic_of_operations = {
+            'like': 'like_count',
+            'comment': 'comment_count',
+            'share': 'share_count',
+            'engagement': 'engagement_count',
+            'dislike': 'dislike_count'
+        }
+        operation = dic_of_operations.get(
+            self.request.query_params.get('type', 'like'), 'like_count')
+        limit_by = int(self.request.query_params.get('limit', 24))
+        queryset = self.get_queryset()
+
+        queryset = queryset.order_by('-created_at')[:limit_by]
+        serializer = PostMetricSerializer(queryset, many=True)
+        return Response(serializer.data)
