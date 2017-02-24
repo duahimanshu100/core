@@ -374,7 +374,7 @@ class FilterEngagementPostApi(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         sql = '''
-        SELECT pf.name, sum(pm.engagement_count) as s_e_c 
+        SELECT pf.name, cast(sum(pm.engagement_count) as integer) as s_e_c 
         FROM public."analyticsApi_postfilter" pf 
         LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = True)
         WHERE pf.profile_id = %s GROUP BY pf.name
@@ -383,7 +383,7 @@ class FilterEngagementPostApi(generics.ListAPIView):
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
-            result = Utility.dictfetchall(cursor)
+            result = cursor.fetchall()
             return Response(result)
         finally:
             cursor.close()
