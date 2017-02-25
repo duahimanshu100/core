@@ -169,6 +169,26 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
             cursor.close()
 
 
+class ProfileEngagementHistoryApi(generics.ListAPIView):
+    '''
+    List post and post count by profile
+    '''
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def get_queryset(self):
+        return []
+
+    def list(self, request, *args, **kwargs):
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, engagement_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
 class RecentPostApi(generics.ListAPIView):
     '''
     List post and post count by profile
