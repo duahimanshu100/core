@@ -411,7 +411,7 @@ class Hour24EngagementApi(generics.ListAPIView):
             'dislike': 'dislike_count'
         }
         operation = dic_of_operations.get(
-            self.request.query_params.get(' ', 'like'), 'like_count')
+            self.request.query_params.get('type', 'like'), 'like_count')
         limit_by = int(self.request.query_params.get('limit', 24))
         queryset = self.get_queryset()
 
