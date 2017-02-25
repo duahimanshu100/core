@@ -2,7 +2,7 @@ from django.conf.urls import url
 from analyticsApi.api.post import PostListApi, PostHistoryListApi
 from analyticsApi.api.post import PostFilterUsageApi, PostDistributionApi, PostTagRepartitionApi, PostDetailApi
 from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi, PostListApiV2
-from analyticsApi.api.engagement import ProfileEngagementHistoryApi, PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi, EngagementAverageApi, EngagementFrequencyApi, FilterEngagementPostApi, Hour24EngagementApi
+from analyticsApi.api.engagement import ProfileEngagementHistoryApi, PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi, EngagementAverageApi, EngagementFrequencyApi, FilterEngagementPostApi, Hour24EngagementApi, FollowersGainedApi
 from analyticsApi.api.profile import ProfileDetail, ProfileAudiencApi
 urlpatterns = [
     url(r'^(?i)api/(?P<profile_id>.+)/Posts$', PostListApi.as_view()),
@@ -59,5 +59,7 @@ urlpatterns = [
         ProfileDetail.as_view()),
     url(r'^(?i)api/(?P<profile_id>.+)/Profile/ProfileAudiencApi$',
         ProfileAudiencApi.as_view()),
+    url(r'^(?i)api/(?P<profile_id>.+)/Profile/FollowersGained$',
+        FollowersGainedApi.as_view()),
 
 ]

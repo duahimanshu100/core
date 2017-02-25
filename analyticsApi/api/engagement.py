@@ -9,6 +9,32 @@ from django.db import connection
 from django.db.models import Max
 
 
+class FollowersGainedApi(generics.ListAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        return []
+
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+
+    def list(self, request, *args, **kwargs):
+        sql = '''
+            SELECT DISTINCT ON (created_at::date) created_at::date, audience_count
+            FROM public."analyticsApi_profilemetric" WHERE profile_id = %s
+            ORDER BY created_at::date DESC LIMIT 30;
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
+
+
 class EngagementAverageApi(generics.ListAPIView):
     '''
     Filter impact on like
@@ -189,6 +215,8 @@ class ProfileEngagementHistoryApi(generics.ListAPIView):
             return Response(result)
         finally:
             cursor.close()
+
+
 class RecentPostApi(generics.ListAPIView):
     '''
     List post and post count by profile
