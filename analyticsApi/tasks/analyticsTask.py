@@ -119,13 +119,13 @@ def syncSinglePost(post):
     # obj.get_posts_by_profile(profile, None, params)
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
+#@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
 
 
-@periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)
+#@periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
 
@@ -175,8 +175,12 @@ def syncVisionByPost(post_id, post_image):
 
     # post_vision
 
-
-def syncVision(posts):
+@periodic_task(run_every=(crontab(minute=50, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+def syncVision():
+    from analyticsApi.models import Post,PostVision
+    already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
+    already_visioned = list(already_visioned)
+    posts = Post.objects.filter(image_urls__isnull=False).exclude(post_id__in=already_visioned)
     for post in posts:
         print(post.id)
         if post.image_urls:
