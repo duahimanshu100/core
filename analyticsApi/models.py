@@ -248,3 +248,21 @@ class PostVision(models.Model):
 
     def __str__(self):
         return str(self.post_id)
+
+
+class ProfileEngagementMetric(models.Model):
+    '''
+    Simply Measured Token
+    '''
+    TOKEN_CHOICES = (
+        (1, "Average_Engagement"),
+        (2, "Frequency_Engagement"))
+    profile_id = models.CharField(max_length=200, blank=True, db_index=True)
+    engagement_type = models.IntegerField(
+        choices=TOKEN_CHOICES, default=1, db_index=True)
+    json_response = JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.profile_id + ' - ' + str(self.engagement_type)

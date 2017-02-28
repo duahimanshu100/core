@@ -1,15 +1,15 @@
 import dateutil.parser
-from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer
+from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer
 from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.response import Response
 from analyticsApi.utility import Utility
-from analyticsApi.models import PostMetric
+from analyticsApi.models import PostMetric, ProfileEngagementMetric
 from django.db import connection
 from django.db.models import Max
 
 
-class EngagementAverageApi(generics.ListAPIView):
+class FollowersGainedApi(generics.ListAPIView):
     '''
     Filter impact on like
     '''
@@ -21,70 +21,55 @@ class EngagementAverageApi(generics.ListAPIView):
     model = serializer_class.Meta.model
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT pm.engagement_count, CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer END AS "HOUR_OF_POSTING", post.created_at::time, EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) WHERE pm.is_latest=True AND post.profile_id = %s '''
+        sql = '''
+            SELECT DISTINCT ON (created_at::date) created_at::date, audience_count
+            FROM public."analyticsApi_profilemetric" WHERE profile_id = %s
+            ORDER BY created_at::date DESC LIMIT 30;
+        '''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
-            arr = []
-            for i in range(24):
-                for j in range(7):
-                    arr.append([i, j, 0, 0])
-
-            for row in cursor.fetchall():
-                tmp_hour = row[1]
-                tmp_day = row[3]
-                if(tmp_hour == 24):
-                    tmp_hour = 0
-                    tmp_day += 1
-                    if(tmp_day == 7):
-                        tmp_day = 0
-                arr[tmp_hour * 7 + tmp_day][2] += 1
-                arr[tmp_hour * 7 + tmp_day][3] += row[0]
-            for elem in arr:
-                tmp = 0
-                if elem[2]:
-                    tmp = round(elem[3] / elem[2])
-                elem.pop()
-                elem.pop()
-                elem.append(tmp)
-            return Response(arr)
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
         finally:
             cursor.close()
 
 
-class EngagementFrequencyApi(generics.ListAPIView):
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+
+class EngagementAverageApi(generics.RetrieveAPIView):
     '''
     Filter impact on like
     '''
 
     def get_queryset(self):
-        return []
+        pass
 
-    serializer_class = PostMetricSerializer
-    model = serializer_class.Meta.model
+    def get(self, request, *args, **kw):
+        profile_id = self.kwargs['profile_id']
+        queryset = ProfileEngagementMetric.objects.filter(
+            profile_id=profile_id, engagement_type=1).first()
+        response = Response(queryset.json_response, status=status.HTTP_200_OK)
+        return response
 
-    def list(self, request, *args, **kwargs):
-        sql = '''SELECT pm.engagement_count, CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer END AS "HOUR_OF_POSTING", post.created_at::time, EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) WHERE pm.is_latest=True AND post.profile_id = %s '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            arr = []
-            for i in range(24):
-                for j in range(7):
-                    arr.append([i, j, 0])
 
-            for row in cursor.fetchall():
-                tmp_hour = row[1]
-                tmp_day = row[3]
-                if(tmp_hour == 24):
-                    tmp_hour = 0
-                    tmp_day += 1
-                    if(tmp_day == 7):
-                        tmp_day = 0
-                arr[tmp_hour * 7 + tmp_day][2] += 1
-            return Response(arr)
-        finally:
-            cursor.close()
+class EngagementFrequencyApi(generics.RetrieveAPIView):
+    '''
+    Filter impact on like
+    '''
+
+    def get_queryset(self):
+        pass
+
+    def get(self, request, *args, **kw):
+        profile_id = self.kwargs['profile_id']
+        queryset = ProfileEngagementMetric.objects.filter(
+            profile_id=profile_id, engagement_type=2).first()
+        response = Response(queryset.json_response, status=status.HTTP_200_OK)
+        return response
 
 
 class PostMetricListApi(generics.ListAPIView):
@@ -137,7 +122,11 @@ class ProfileLikeHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
+
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        if(self.request.query_params.get('limit', '')):
+            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
+
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -159,7 +148,33 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, comment_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at ASC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, comment_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        if(self.request.query_params.get('limit', '')):
+            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = Utility.dictfetchall(cursor)
+            return Response(result)
+        finally:
+            cursor.close()
+
+
+class ProfileEngagementHistoryApi(generics.ListAPIView):
+    '''
+    List post and post count by profile
+    '''
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+    paginate_by = 100
+
+    def get_queryset(self):
+        return []
+
+    def list(self, request, *args, **kwargs):
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, engagement_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        if(self.request.query_params.get('limit', '')):
+            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -360,3 +375,71 @@ class HashtagPerformanceApi(generics.ListAPIView):
             return Response(result)
         finally:
             cursor.close()
+
+
+class FilterEngagementPostApi(generics.ListAPIView):
+    '''
+    FilterEngagementPostApi
+    '''
+    serializer_class = PostFilterSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        return []
+
+    def list(self, request, *args, **kwargs):
+        sql = '''
+        SELECT pf.name, cast(sum(pm.engagement_count) as integer) as s_e_c 
+        FROM public."analyticsApi_postfilter" pf 
+        LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = True)
+        WHERE pf.profile_id = %s GROUP BY pf.name
+        ORDER BY s_e_C DESC
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            result = cursor.fetchall()
+            return Response(result)
+        finally:
+            cursor.close()
+
+
+class Hour24EngagementApi(generics.ListAPIView):
+    '''
+    Hour24EngagementApi impact on like
+    '''
+    serializer_class = PostMetricSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        queryset = self.model.objects.filter(
+            post_id_id=post_id)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        dic_of_operations = {
+            'like': 'like_count',
+            'comment': 'comment_count',
+            'share': 'share_count',
+            'engagement': 'engagement_count',
+            'dislike': 'dislike_count'
+        }
+        operation = dic_of_operations.get(
+            self.request.query_params.get('type', 'like'), 'like_count')
+        limit_by = int(self.request.query_params.get('limit', 24))
+        queryset = self.get_queryset()
+
+        queryset = queryset.order_by('-created_at')[:limit_by]
+        serializer = PostMetricSerializer(queryset, many=True)
+        last_entity = 0
+        serialized_data = serializer.data
+        result_delta = []
+        count = 1
+        for data in reversed(serialized_data):
+            data['delta'] = data[operation] - last_entity
+            last_entity = data[operation]
+            result_delta.append((count, data['delta']))
+            count = count + 1
+
+        return Response(result_delta)
