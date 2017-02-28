@@ -278,7 +278,7 @@ def saveProfileEngagementDaily():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Starts')
-        saveEngagementAverage(str(profile.profile_id))
-        saveEngagementFrequency(str(profile.profile_id))
+        saveEngagementAverage.delay(str(profile.profile_id))
+        saveEngagementFrequency.delay(str(profile.profile_id))
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Finished')
