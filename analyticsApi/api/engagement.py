@@ -510,6 +510,8 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
         finally:
             cursor.close()
 
+        if not query_result:
+            query_result = (0, 0, 0)
         sql = '''
         SELECT SUM(like_count), SUM(engagement_count), SUM(comment_count)
         FROM public."analyticsApi_postmetric" WHERE profile_id = %s
