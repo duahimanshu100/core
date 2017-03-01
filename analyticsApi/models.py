@@ -92,7 +92,7 @@ class ProfileMetric(models.Model):
     '''
     profile_id = models.CharField(max_length=200)
     audience_count = models.BigIntegerField(default=0)
-    is_latest = models.BooleanField(default=False)
+    is_latest = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
