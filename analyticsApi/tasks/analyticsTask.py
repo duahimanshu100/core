@@ -51,7 +51,7 @@ def syncAllProfilesPost():
         count = count + 1
         print('Profile Id Sync Starts for ' +
               str(profile.id) + ' at ' + str(datetime.now()))
-        syncProfilePosts.delay(profile.id, profile.sm_account.sm_id, TOKEN)
+        syncProfilePosts(profile.profile_id, profile.sm_account.sm_id, TOKEN)
         print('Profile Id Sync Completed for ' +
               str(profile.id) + ' at ' + str(datetime.now()))
         print('Count is ' + str(count))
@@ -91,7 +91,6 @@ def syncProfileLikes(profile):
         print('Token Not Found')
 
 
-@app.task()
 def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
     print(profile_id, sm_acc_id, TOKEN)
     '''
@@ -124,13 +123,11 @@ def syncSinglePost(post):
     # obj.get_posts_by_profile(profile, None, params)
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
 
 
-@periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
 
@@ -179,12 +176,18 @@ def syncVisionByPost(post_id, post_image):
     # post_vision
 
 
-def syncVision(posts):
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+def syncVision():
+    from analyticsApi.models import Post, PostVision
+    already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
+    already_visioned = list(already_visioned)
+    posts = Post.objects.filter(image_urls__isnull=False).exclude(
+        post_id__in=already_visioned)
     for post in posts:
         print(post.id)
         if post.image_urls:
             try:
-                syncVisionByPost.delay(post.post_id, post.image_urls[0])
+                syncVisionByPost(post.post_id, post.image_urls[0])
                 # syncVisionByPost(post, google_vision, aws_vision)
             except Exception:
                 import traceback
@@ -279,7 +282,7 @@ def saveProfileEngagementDaily():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Starts')
-        saveEngagementAverage.delay(str(profile.profile_id))
-        saveEngagementFrequency.delay(str(profile.profile_id))
+        saveEngagementAverage(str(profile.profile_id))
+        saveEngagementFrequency(str(profile.profile_id))
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Finished')
