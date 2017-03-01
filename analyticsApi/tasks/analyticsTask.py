@@ -31,10 +31,12 @@ def syncProfiles(is_hourly=False):
             ProfileSerializer, result, Profile, 'profile_id', 'profile_id')
         print(r)
         if is_hourly:
+            print('In Hourly. saving the Profile Metric')
             ProfileMetric.objects.filter(
                 is_latest=True).update(is_latest=False)
-            Utility.save_and_update_data(
+            ac = Utility.save_and_update_data(
                 ProfileMetricSerializer, result, ProfileMetric)
+            print(ac)
     else:
         print('Token Not Found')
 
@@ -50,10 +52,10 @@ def syncAllProfilesPost():
     for profile in Profile.objects.filter(is_active=True):
         count = count + 1
         print('Profile Id Sync Starts for ' +
-              str(profile.id) + ' at ' + str(datetime.now()))
-        syncProfilePosts(profile.id, profile.sm_account.sm_id, TOKEN)
+              str(profile.profile_id) + ' at ' + str(datetime.now()))
+        syncProfilePosts(profile.profile_id, profile.sm_account.sm_id, TOKEN)
         print('Profile Id Sync Completed for ' +
-              str(profile.id) + ' at ' + str(datetime.now()))
+              str(profile.profile_id) + ' at ' + str(datetime.now()))
         print('Count is ' + str(count))
 
 
@@ -179,11 +181,14 @@ def syncVisionByPost(post_id, post_image):
     # post_vision
 
 #@periodic_task(run_every=(crontab(minute=50, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+
+
 def syncVision():
-    from analyticsApi.models import Post,PostVision
+    from analyticsApi.models import Post, PostVision
     already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
     already_visioned = list(already_visioned)
-    posts = Post.objects.filter(image_urls__isnull=False).exclude(post_id__in=already_visioned)
+    posts = Post.objects.filter(image_urls__isnull=False).exclude(
+        post_id__in=already_visioned)
     for post in posts:
         print(post.id)
         if post.image_urls:
