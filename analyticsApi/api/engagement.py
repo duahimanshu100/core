@@ -236,7 +236,7 @@ class OperationPostApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id)
+            profile_id=profile_id).exclude(post_id__image_urls__isnull=True)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -261,14 +261,13 @@ class OperationPostApi(generics.ListAPIView):
 
         if from_date:
             from_date = dateutil.parser.parse(from_date)
-            queryset = queryset.filter(post__created_at__gte=from_date)
+            queryset = queryset.filter(post_id__created_at__gte=from_date)
         if to_date:
             to_date = dateutil.parser.parse(to_date)
-            queryset = queryset.filter(post__created_at__lte=to_date)
+            queryset = queryset.filter(post_id__created_at__lte=to_date)
 
         if filter:
-            queryset = queryset.filter(post__primary_content_type=filter)
-
+            queryset = queryset.filter(post_id__primary_content_type=filter)
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
         serializer = PostWithMetricSerializer(queryset, many=True)
