@@ -507,11 +507,11 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
             query_result = cursor.fetchone()
+            if not query_result:
+                query_result = (0, 0, 0)
         finally:
             cursor.close()
 
-        if not query_result:
-            query_result = (0, 0, 0)
         sql = '''
         SELECT SUM(like_count), SUM(engagement_count), SUM(comment_count)
         FROM public."analyticsApi_postmetric" WHERE profile_id = %s
@@ -523,8 +523,19 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
             if query_result:
 
                 last_query_result = cursor.fetchone()
-                like = last_query_result[0] - query_result[0]
-                comment = last_query_result[1] - query_result[1]
+                z = query_result[0]
+                o = query_result[1]
+                try:
+                    1 - z
+                except TypeError as e:
+                    z = 0
+                try:
+                    1 - o
+                except TypeError as e:
+                    o = 0
+
+                like = last_query_result[0] - z
+                comment = last_query_result[1] - o
                 result.append(like)
                 result.append(comment)
                 result.append(like + comment)
