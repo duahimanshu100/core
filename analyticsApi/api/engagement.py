@@ -464,21 +464,6 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         result = []
         sql = '''
-        SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
-        FROM public."analyticsApi_postmetric" pm
-        WHERE pm.profile_id = %s AND pm.is_latest = True
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            query_result = cursor.fetchone()
-
-            result.append(query_result[0])
-            result.append(query_result[1])
-        finally:
-            cursor.close()
-
-        sql = '''
         SELECT audience_count
         FROM public."analyticsApi_profilemetric"
         WHERE profile_id = %s AND is_latest = True
@@ -491,6 +476,21 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
                 result.append(query_result[0])
             else:
                 result.append(0)
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
+        FROM public."analyticsApi_postmetric" pm
+        WHERE pm.profile_id = %s AND pm.is_latest = True
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            query_result = cursor.fetchone()
+
+            result.append(query_result[0])
+            result.append(query_result[1])
         finally:
             cursor.close()
 
@@ -536,9 +536,8 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
 
                 like = last_query_result[0] - z
                 comment = last_query_result[1] - o
-                result.append(like)
-                result.append(comment)
                 result.append(like + comment)
+
         finally:
             cursor.close()
 
@@ -569,6 +568,10 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
                     result.append(last_query_result[0] - query_result[0])
                 else:
                     result.append(0 - query_result[0])
+
         finally:
             cursor.close()
+        result.append(comment)
+        result.append(like)
+
         return Response(result)
