@@ -1,7 +1,7 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post
+from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post, ProfileEngagementMetric
 from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer, ProfileMetricSerializer
 from analyticsApi.simplyMeasured.api.analytics.analytics import ApiAnalytics
 from analyticsApi.utility import Utility
@@ -9,6 +9,9 @@ from analyticsApi.simplyMeasured.api.token.token import ApiToken
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 from datetime import datetime
+from analytics.celery import app
+from django.db import connection
+import json
 
 
 def syncProfiles(is_hourly=False):
@@ -48,7 +51,7 @@ def syncAllProfilesPost():
         count = count + 1
         print('Profile Id Sync Starts for ' +
               str(profile.id) + ' at ' + str(datetime.now()))
-        syncProfilePosts(profile, TOKEN)
+        syncProfilePosts(profile.id, profile.sm_account.sm_id, TOKEN)
         print('Profile Id Sync Completed for ' +
               str(profile.id) + ' at ' + str(datetime.now()))
         print('Count is ' + str(count))
@@ -88,13 +91,15 @@ def syncProfileLikes(profile):
         print('Token Not Found')
 
 
-def syncProfilePosts(profile, TOKEN):
+#@app.task()
+def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
+    print(profile_id, sm_acc_id, TOKEN)
     '''
     syncProfilePosts will create or update the posts
     of simply measured  associated with the token and profile
     '''
     params = {'filter': [
-        'author.id.eq(' + str(profile.profile_id) + ')'],
+        'author.id.eq(' + str(profile_id) + ')'],
         'limit': 1000,
         'fields': 'post.url,post.target_url,post.sentiment,post.primary_content_type,post.language,post.province,post.is_brand,post.image_urls,post.distribution_type,post.country,data_source_id,datarank,channel,author.profile_link,author.image_url,author.display_name,post.geo,post.hashtags,post.instagram.image_filter,post.body,post.id,post.content_types,post.creation_date,author.id',
         'metrics': 'post.replies_count,post.shares_count,post.likes_count,post.engagement_total,post.dislikes_count'
@@ -104,7 +109,7 @@ def syncProfilePosts(profile, TOKEN):
     if (TOKEN):
         obj = ApiAnalytics(TOKEN)
         # print(params)
-        obj.get_posts(profile.sm_account.sm_id, params)
+        obj.get_posts(sm_acc_id, params)
     else:
         print('Token Not Found')
 
@@ -119,7 +124,7 @@ def syncSinglePost(post):
     # obj.get_posts_by_profile(profile, None, params)
 
 
-#@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
@@ -129,10 +134,8 @@ def syncAllProfileAndPost():
 def syncAudienceCount():
     syncProfiles()
 
-from analytics.celery import app
 
-
-@app.task()
+#@app.task()
 def syncVisionByPost(post_id, post_image):
     print("INTO THE SYNC FOR %s IMAGE(%s)" % (post_id, post_image))
     from analyticsApi.vision import get_vision_results
@@ -175,7 +178,7 @@ def syncVisionByPost(post_id, post_image):
 
     # post_vision
 
-@periodic_task(run_every=(crontab(minute=50, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+#@periodic_task(run_every=(crontab(minute=50, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
 def syncVision():
     from analyticsApi.models import Post,PostVision
     already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
@@ -192,3 +195,95 @@ def syncVision():
                 print(traceback.print_exc())
                 print('ERROR in *****************')
                 print(post)
+
+
+#@app.task()
+def saveEngagementAverage(profile_id):
+    profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
+        profile_id=profile_id, engagement_type=1)
+    sql = '''SELECT pm.engagement_count,
+        CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' 
+        THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer 
+        END AS "HOUR_OF_POSTING", post.created_at::time, 
+        EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
+        LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) 
+        WHERE pm.is_latest=True AND post.profile_id = %s '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id])
+        arr = []
+        for i in range(24):
+            for j in range(7):
+                arr.append([i, j, 0, 0])
+
+        for row in cursor.fetchall():
+            tmp_hour = row[1]
+            tmp_day = row[3]
+            if(tmp_hour == 24):
+                tmp_hour = 0
+                tmp_day += 1
+                if(tmp_day == 7):
+                    tmp_day = 0
+            arr[tmp_hour * 7 + tmp_day][2] += 1
+            arr[tmp_hour * 7 + tmp_day][3] += row[0]
+        for elem in arr:
+            tmp = 0
+            if elem[2]:
+                tmp = round(elem[3] / elem[2])
+            elem.pop()
+            elem.pop()
+            elem.append(tmp)
+        profile_engagement_metric.profile_id = profile_id
+        profile_engagement_metric.json_response = arr
+        profile_engagement_metric.engagement_type = 1
+        profile_engagement_metric.save()
+    finally:
+        cursor.close()
+
+
+#@app.task()
+def saveEngagementFrequency(profile_id):
+    profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
+        profile_id=profile_id, engagement_type=2)
+    sql = '''SELECT pm.engagement_count, 
+    CASE WHEN post.created_at::time < date_trunc('hour', post.created_at::time) + interval '45 minutes' 
+    THEN EXTRACT(HOUR FROM post.created_at)::integer 
+    ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer 
+    END AS "HOUR_OF_POSTING", post.created_at::time, 
+    EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
+    LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) 
+    WHERE pm.is_latest=True AND post.profile_id = %s '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id])
+        arr = []
+        for i in range(24):
+            for j in range(7):
+                arr.append([i, j, 0])
+
+        for row in cursor.fetchall():
+            tmp_hour = row[1]
+            tmp_day = row[3]
+            if(tmp_hour == 24):
+                tmp_hour = 0
+                tmp_day += 1
+                if(tmp_day == 7):
+                    tmp_day = 0
+            arr[tmp_hour * 7 + tmp_day][2] += 1
+        profile_engagement_metric.profile_id = profile_id
+        profile_engagement_metric.json_response = arr
+        profile_engagement_metric.engagement_type = 2
+        profile_engagement_metric.save()
+    finally:
+        cursor.close()
+
+
+#@periodic_task(run_every=(crontab(minute=0, hour=0)), name="saveProfileEngagementDaily", ignore_result=True)
+def saveProfileEngagementDaily():
+    for profile in Profile.objects.filter(is_active=True):
+        print('Saving Engagement for Profile Id - ' +
+              str(profile.profile_id) + ' Starts')
+        saveEngagementAverage.delay(str(profile.profile_id))
+        saveEngagementFrequency.delay(str(profile.profile_id))
+        print('Saving Engagement for Profile Id - ' +
+              str(profile.profile_id) + ' Finished')

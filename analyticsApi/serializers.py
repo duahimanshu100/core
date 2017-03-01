@@ -76,6 +76,37 @@ class PostWithMetricSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class PostMetricSerializerV2(serializers.ModelSerializer):
+    '''
+        Serializer for Post Ha  shtag model
+    '''
+
+    def to_representation(self, instance):
+        data = super(PostMetricSerializerV2,
+                     self).to_representation(instance)
+        post_vision = PostVision.objects.filter(
+            post_id=instance.post_id.post_id)
+        post_hash_tags = PostHashTag.objects.filter(
+            post_id=instance.post_id.post_id)
+        post_filters = PostFilter.objects.filter(
+            post_id=instance.post_id.post_id)
+        if post_vision:
+            data['post_vision'] = PostsVisionSerializer(post_vision[0]).data
+        if post_hash_tags:
+            data['post_hash_tags'] = PostHashTagSerializer(
+                post_hash_tags, many=True).data
+        if post_filters:
+            data['post_filters'] = PostFilterSerializer(
+                post_filters, many=True).data
+
+        return data
+
+    class Meta:
+        model = PostMetric
+        fields = '__all__'
+        depth = 1
+
+
 class PostShareSerializer(serializers.ModelSerializer):
     '''
         Serializer for Post Ha  shtag model

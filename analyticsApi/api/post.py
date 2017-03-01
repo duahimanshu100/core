@@ -1,5 +1,5 @@
 import dateutil.parser
-from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer, PostsListWithVisionSerializer
+from analyticsApi.serializers import PostsListSerializer, PostsFilterUsageSerializer, PostsTagUsageSerializer, PostsListWithVisionSerializer, PostMetricSerializerV2
 from django.db.models import Case, When
 from django.db.models import Count
 from django.db.models import IntegerField, Sum
@@ -31,6 +31,28 @@ class PostListApi(generics.ListAPIView):
             sort_type = ''
         # sort_field = self.request.query_params.get('sort_field', '-')
         return queryset.order_by(sort_type + 'created_at')
+
+
+class PostListApiV2(generics.ListAPIView):
+    '''
+    List all post associated by profile
+    '''
+    serializer_class = PostMetricSerializerV2
+    model = serializer_class.Meta.model
+    pagination_class = ResultsSetPagination
+
+    def get_queryset(self):
+        profile_id = self.kwargs['profile_id']
+        queryset = self.model.objects.filter(
+            profile_id=profile_id, is_latest=True)
+        sort_type = self.request.query_params.get('sort', '-')
+        if sort_type == 'ASC':
+            sort_type = ''
+        sort_field = self.request.query_params.get('sort_field', '')
+        if sort_field:
+            return queryset.order_by(sort_type + sort_field)
+        else:
+            return queryset.order_by(sort_type + 'post_id__created_at')
 
 
 class PostDetailApi(generics.RetrieveUpdateDestroyAPIView):

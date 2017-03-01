@@ -42,5 +42,6 @@ class ProfileAudiencApi(generics.ListAPIView):
 
         queryset = queryset.extra({'created_day': "date(created_at)"}).values(
             'created_day').annotate(count=Avg('audience_count'))
+        queryset = queryset.order_by('-created_day')
         serialized = list(queryset)
         return Response(serialized)
