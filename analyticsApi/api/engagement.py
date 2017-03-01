@@ -449,3 +449,113 @@ class Hour24EngagementApi(generics.ListAPIView):
                         (index, serialized_data[index][operation]))
 
         return Response(result_delta)
+
+
+class ProfileCompleteDetailApi(generics.ListAPIView):
+    '''
+    ProfileCompleteDetailApi
+    '''
+    serializer_class = PostFilterSerializer
+    model = serializer_class.Meta.model
+
+    def get_queryset(self):
+        return []
+
+    def list(self, request, *args, **kwargs):
+        result = []
+        sql = '''
+        SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
+        FROM public."analyticsApi_postmetric" pm
+        WHERE pm.profile_id = %s AND pm.is_latest = True
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            query_result = cursor.fetchone()
+
+            result.append(query_result[0])
+            result.append(query_result[1])
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT audience_count
+        FROM public."analyticsApi_profilemetric"
+        WHERE profile_id = %s AND is_latest = True
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            query_result = cursor.fetchone()
+            if query_result:
+                result.append(query_result[0])
+            else:
+                result.append(0)
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT SUM(a.like_count) as totalLike, SUM(a.comment_count)
+         as totalComment, SUM(a.engagement_count) as totalEngage
+         FROM (SELECT  DISTINCT ON (post_id_id)
+         like_count, engagement_count,comment_count
+         FROM public."analyticsApi_postmetric"
+         WHERE profile_id = %s
+         AND created_at::date = '2017-02-21') a
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            query_result = cursor.fetchone()
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT SUM(like_count), SUM(engagement_count), SUM(comment_count)
+        FROM public."analyticsApi_postmetric" WHERE profile_id = %s
+        AND is_latest = True
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            if query_result:
+
+                last_query_result = cursor.fetchone()
+                like = last_query_result[0] - query_result[0]
+                comment = last_query_result[1] - query_result[1]
+                result.append(like)
+                result.append(comment)
+                result.append(like + comment)
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT DISTINCT ON (created_at::date) audience_count
+        FROM public."analyticsApi_profilemetric"
+        WHERE profile_id = %s AND created_at::date = '2017-02-15'
+        ORDER BY created_at::date DESC
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            query_result = cursor.fetchone()
+        finally:
+            cursor.close()
+
+        sql = '''
+        SELECT audience_count
+        FROM public."analyticsApi_profilemetric"
+        WHERE profile_id = %s AND is_latest = True
+        '''
+        cursor = connection.cursor()
+        try:
+            cursor.execute(sql, [self.kwargs['profile_id']])
+            if query_result:
+                last_query_result = cursor.fetchone()
+                if last_query_result:
+                    result.append(last_query_result[0] - query_result[0])
+                else:
+                    result.append(0 - query_result[0])
+        finally:
+            cursor.close()
+        return Response(result)

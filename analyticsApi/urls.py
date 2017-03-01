@@ -2,7 +2,7 @@ from django.conf.urls import url
 from analyticsApi.api.post import PostListApi, PostHistoryListApi
 from analyticsApi.api.post import PostFilterUsageApi, PostDistributionApi, PostTagRepartitionApi, PostDetailApi
 from analyticsApi.api.post import PostTagUsageApi, PostGeolocationApi, PostDensityApi, PostListApiV2
-from analyticsApi.api.engagement import ProfileEngagementHistoryApi, PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi, EngagementAverageApi, EngagementFrequencyApi, FilterEngagementPostApi, Hour24EngagementApi, FollowersGainedApi
+from analyticsApi.api.engagement import ProfileEngagementHistoryApi, PostMetricListApi, ProfileLikeHistoryApi, ProfileCommentHistoryApi, RecentPostApi, OperationPostApi, FilterImpactLikeApi, FilterImpactCommentApi, HashtagPerformanceApi, EngagementAverageApi, EngagementFrequencyApi, FilterEngagementPostApi, Hour24EngagementApi, FollowersGainedApi,ProfileCompleteDetailApi
 from analyticsApi.api.profile import ProfileDetail, ProfileAudiencApi
 urlpatterns = [
     url(r'^(?i)api/(?P<profile_id>.+)/Posts$', PostListApi.as_view()),
@@ -54,6 +54,8 @@ urlpatterns = [
 
     url(r'^(?i)api/(?P<post_id>.+)/Posts/engagement/Hour24EngagementApi$',
         Hour24EngagementApi.as_view()),
+    url(r'^(?i)api/(?P<profile_id>.+)/Posts/engagement/ProfileCompleteDetailApi$',
+        ProfileCompleteDetailApi.as_view()),
 
     url(r'^(?i)api/Profile/(?P<profile_id>.+)$',
         ProfileDetail.as_view()),
