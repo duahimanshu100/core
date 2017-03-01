@@ -427,19 +427,26 @@ class Hour24EngagementApi(generics.ListAPIView):
         }
         operation = dic_of_operations.get(
             self.request.query_params.get('type', 'like'), 'like_count')
-        limit_by = int(self.request.query_params.get('limit', 24))
+        limit_by = int(self.request.query_params.get('limit', 25))
         queryset = self.get_queryset()
 
         queryset = queryset.order_by('-created_at')[:limit_by]
         serializer = PostMetricSerializer(queryset, many=True)
-        last_entity = 0
         serialized_data = serializer.data
         result_delta = []
-        count = 1
-        for data in reversed(serialized_data):
-            data['delta'] = data[operation] - last_entity
-            last_entity = data[operation]
-            result_delta.append((count, data['delta']))
-            count = count + 1
+        serialized_data.reverse()
+
+        for index, data in enumerate(serialized_data):
+            if index != 0:
+                if len(serializer.data) < 24:
+                    u = index
+                else:
+                    u = index - 1
+                result_delta.append(
+                    (u, serialized_data[index][operation] - serialized_data[index - 1][operation]))
+            else:
+                if len(serializer.data) < 24:
+                    result_delta.append(
+                        (index, serialized_data[index][operation]))
 
         return Response(result_delta)
