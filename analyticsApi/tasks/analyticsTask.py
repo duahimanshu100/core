@@ -302,7 +302,7 @@ def saveProfileCompleteMetricByProfile(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=3)
     import datetime
-    daysago = datetime.datetime.now() + datetime.timedelta(-30)
+    daysago = datetime.datetime.now() + datetime.timedelta(-10)
     daysago = daysago.strftime("%Y-%m-%d")
     result = []
     sql = '''
