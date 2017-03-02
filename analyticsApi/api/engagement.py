@@ -457,7 +457,7 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         import datetime
-        daysago = datetime.datetime.now() + datetime.timedelta(-30)
+        daysago = datetime.datetime.now() + datetime.timedelta(-10)
         daysago = daysago.strftime("%Y-%m-%d")
         result = []
         sql = '''
