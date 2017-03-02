@@ -426,27 +426,21 @@ class Hour24EngagementApi(generics.ListAPIView):
         }
         operation = dic_of_operations.get(
             self.request.query_params.get('type', 'like'), 'like_count')
-        limit_by = int(self.request.query_params.get('limit', 25))
+        limit_by = int(self.request.query_params.get('limit', 24))
         queryset = self.get_queryset()
 
-        queryset = queryset.order_by('-created_at')[:limit_by]
+        queryset = queryset.order_by('created_at')[:limit_by]
         serializer = PostMetricSerializer(queryset, many=True)
         serialized_data = serializer.data
         result_delta = []
-        serialized_data.reverse()
 
         for index, data in enumerate(serialized_data):
             if index != 0:
-                if len(serializer.data) < 24:
-                    u = index
-                else:
-                    u = index - 1
                 result_delta.append(
-                    (u, serialized_data[index][operation] - serialized_data[index - 1][operation]))
+                    (index, serialized_data[index][operation] - serialized_data[index - 1][operation]))
             else:
-                if len(serializer.data) < 24:
-                    result_delta.append(
-                        (index, serialized_data[index][operation]))
+                result_delta.append(
+                    (index, serialized_data[index][operation]))
 
         return Response(result_delta)
 
@@ -462,23 +456,27 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
+        import datetime
+        daysago = datetime.datetime.now() + datetime.timedelta(-30)
+        daysago = daysago.strftime("%Y-%m-%d")
         result = []
         sql = '''
         SELECT audience_count
         FROM public."analyticsApi_profilemetric"
-        WHERE profile_id = %s AND is_latest = True
+        WHERE profile_id = %s ORDER BY created_at DESC LIMIT 1
         '''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
             query_result = cursor.fetchone()
             if query_result:
-                result.append(query_result[0])
+                totalFollowerCount = query_result[0]
             else:
-                result.append(0)
+                totalFollowerCount = 0
         finally:
             cursor.close()
 
+        result.append(totalFollowerCount)
         sql = '''
         SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
         FROM public."analyticsApi_postmetric" pm
@@ -488,9 +486,10 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
             query_result = cursor.fetchone()
-
-            result.append(query_result[0])
-            result.append(query_result[1])
+            totalCommentCount = query_result[0]
+            totalLikeCount = query_result[1]
+            result.append(totalCommentCount)
+            result.append(totalLikeCount)
         finally:
             cursor.close()
 
@@ -501,76 +500,50 @@ class ProfileCompleteDetailApi(generics.ListAPIView):
          like_count, engagement_count,comment_count
          FROM public."analyticsApi_postmetric"
          WHERE profile_id = %s
-         AND created_at::date = '2017-02-21') a
+         AND created_at::date = %s) a
         '''
         cursor = connection.cursor()
         try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
+            cursor.execute(sql, [self.kwargs['profile_id'], daysago])
             query_result = cursor.fetchone()
             if not query_result:
                 query_result = (0, 0, 0)
         finally:
             cursor.close()
 
-        sql = '''
-        SELECT SUM(like_count), SUM(engagement_count), SUM(comment_count)
-        FROM public."analyticsApi_postmetric" WHERE profile_id = %s
-        AND is_latest = True
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            if query_result:
+        daysAgoLikeCount = query_result[0]
+        if not daysAgoLikeCount:
+            daysAgoLikeCount = 0
+        daysAgoCommentCount = query_result[1]
+        if not daysAgoCommentCount:
+            daysAgoCommentCount = 0
+        daysAgoEngagementCount = query_result[2]
+        if not daysAgoEngagementCount:
+            daysAgoEngagementCount = 0
 
-                last_query_result = cursor.fetchone()
-                z = query_result[0]
-                o = query_result[1]
-                try:
-                    1 - z
-                except TypeError as e:
-                    z = 0
-                try:
-                    1 - o
-                except TypeError as e:
-                    o = 0
-
-                like = last_query_result[0] - z
-                comment = last_query_result[1] - o
-                result.append(like + comment)
-
-        finally:
-            cursor.close()
+        like = totalLikeCount - daysAgoLikeCount
+        comment = totalCommentCount - daysAgoCommentCount
+        result.append(like + comment)
 
         sql = '''
         SELECT DISTINCT ON (created_at::date) audience_count
         FROM public."analyticsApi_profilemetric"
-        WHERE profile_id = %s AND created_at::date = '2017-02-15'
+        WHERE profile_id = %s AND created_at::date = %s
         ORDER BY created_at::date DESC
         '''
         cursor = connection.cursor()
         try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
+            cursor.execute(sql, [self.kwargs['profile_id'], daysago])
             query_result = cursor.fetchone()
+            if not query_result:
+                daysAgoFollowerCount = 0
+            else:
+                daysAgoFollowerCount = query_result[0]
+                if not daysAgoFollowerCount:
+                    daysAgoFollowerCount = 0
         finally:
             cursor.close()
-
-        sql = '''
-        SELECT audience_count
-        FROM public."analyticsApi_profilemetric"
-        WHERE profile_id = %s AND is_latest = True
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            if query_result:
-                last_query_result = cursor.fetchone()
-                if last_query_result:
-                    result.append(last_query_result[0] - query_result[0])
-                else:
-                    result.append(0 - query_result[0])
-
-        finally:
-            cursor.close()
+        result.append(totalFollowerCount - daysAgoFollowerCount)
         result.append(comment)
         result.append(like)
 
