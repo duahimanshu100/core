@@ -288,7 +288,7 @@ def saveProfileEngagementDaily():
               str(profile.profile_id) + ' Finished')
 
 
-# @periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
 def saveProfileCompleteMetric():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving saveProfileCompleteMetric for Profile Id - ' +

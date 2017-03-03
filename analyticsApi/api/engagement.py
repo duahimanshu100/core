@@ -445,106 +445,118 @@ class Hour24EngagementApi(generics.ListAPIView):
         return Response(result_delta)
 
 
-class ProfileCompleteDetailApi(generics.ListAPIView):
+class ProfileCompleteDetailApi(generics.RetrieveAPIView):
+    def get_queryset(self):
+        pass
+
+    def get(self, request, *args, **kw):
+        profile_id = self.kwargs['profile_id']
+        queryset = ProfileEngagementMetric.objects.filter(
+            profile_id=profile_id, engagement_type=3).first()
+        responseData = []
+        if queryset:
+            responseData = queryset.json_response
+        response = Response(responseData, status=status.HTTP_200_OK)
+        return response
     '''
     ProfileCompleteDetailApi
     '''
-    serializer_class = PostFilterSerializer
-    model = serializer_class.Meta.model
+    # serializer_class = PostFilterSerializer
+    # model = serializer_class.Meta.model
 
-    def get_queryset(self):
-        return []
+    # def get_queryset(self):
+    #     return []
 
-    def list(self, request, *args, **kwargs):
-        import datetime
-        daysago = datetime.datetime.now() + datetime.timedelta(-10)
-        daysago = daysago.strftime("%Y-%m-%d")
-        result = []
-        sql = '''
-        SELECT audience_count
-        FROM public."analyticsApi_profilemetric"
-        WHERE profile_id = %s ORDER BY created_at DESC LIMIT 1
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            query_result = cursor.fetchone()
-            if query_result:
-                totalFollowerCount = query_result[0]
-            else:
-                totalFollowerCount = 0
-        finally:
-            cursor.close()
+    # def list(self, request, *args, **kwargs):
+    #     import datetime
+    #     daysago = datetime.datetime.now() + datetime.timedelta(-10)
+    #     daysago = daysago.strftime("%Y-%m-%d")
+    #     result = []
+    #     sql = '''
+    #     SELECT audience_count
+    #     FROM public."analyticsApi_profilemetric"
+    #     WHERE profile_id = %s ORDER BY created_at DESC LIMIT 1
+    #     '''
+    #     cursor = connection.cursor()
+    #     try:
+    #         cursor.execute(sql, [self.kwargs['profile_id']])
+    #         query_result = cursor.fetchone()
+    #         if query_result:
+    #             totalFollowerCount = query_result[0]
+    #         else:
+    #             totalFollowerCount = 0
+    #     finally:
+    #         cursor.close()
 
-        result.append(totalFollowerCount)
-        sql = '''
-        SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
-        FROM public."analyticsApi_postmetric" pm
-        WHERE pm.profile_id = %s AND pm.is_latest = True
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            query_result = cursor.fetchone()
-            totalCommentCount = query_result[0]
-            totalLikeCount = query_result[1]
-            result.append(totalCommentCount)
-            result.append(totalLikeCount)
-        finally:
-            cursor.close()
+    #     result.append(totalFollowerCount)
+    #     sql = '''
+    #     SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount
+    #     FROM public."analyticsApi_postmetric" pm
+    #     WHERE pm.profile_id = %s AND pm.is_latest = True
+    #     '''
+    #     cursor = connection.cursor()
+    #     try:
+    #         cursor.execute(sql, [self.kwargs['profile_id']])
+    #         query_result = cursor.fetchone()
+    #         totalCommentCount = query_result[0]
+    #         totalLikeCount = query_result[1]
+    #         result.append(totalCommentCount)
+    #         result.append(totalLikeCount)
+    #     finally:
+    #         cursor.close()
 
-        sql = '''
-        SELECT SUM(a.like_count) as totalLike, SUM(a.comment_count)
-         as totalComment, SUM(a.engagement_count) as totalEngage
-         FROM (SELECT  DISTINCT ON (post_id_id)
-         like_count, engagement_count,comment_count
-         FROM public."analyticsApi_postmetric"
-         WHERE profile_id = %s
-         AND created_at::date = %s) a
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id'], daysago])
-            query_result = cursor.fetchone()
-            if not query_result:
-                query_result = (0, 0, 0)
-        finally:
-            cursor.close()
+    #     sql = '''
+    #     SELECT SUM(a.like_count) as totalLike, SUM(a.comment_count)
+    #      as totalComment, SUM(a.engagement_count) as totalEngage
+    #      FROM (SELECT  DISTINCT ON (post_id_id)
+    #      like_count, engagement_count,comment_count
+    #      FROM public."analyticsApi_postmetric"
+    #      WHERE profile_id = %s
+    #      AND created_at::date = %s) a
+    #     '''
+    #     cursor = connection.cursor()
+    #     try:
+    #         cursor.execute(sql, [self.kwargs['profile_id'], daysago])
+    #         query_result = cursor.fetchone()
+    #         if not query_result:
+    #             query_result = (0, 0, 0)
+    #     finally:
+    #         cursor.close()
 
-        daysAgoLikeCount = query_result[0]
-        if not daysAgoLikeCount:
-            daysAgoLikeCount = 0
-        daysAgoCommentCount = query_result[1]
-        if not daysAgoCommentCount:
-            daysAgoCommentCount = 0
-        daysAgoEngagementCount = query_result[2]
-        if not daysAgoEngagementCount:
-            daysAgoEngagementCount = 0
+    #     daysAgoLikeCount = query_result[0]
+    #     if not daysAgoLikeCount:
+    #         daysAgoLikeCount = 0
+    #     daysAgoCommentCount = query_result[1]
+    #     if not daysAgoCommentCount:
+    #         daysAgoCommentCount = 0
+    #     daysAgoEngagementCount = query_result[2]
+    #     if not daysAgoEngagementCount:
+    #         daysAgoEngagementCount = 0
 
-        like = totalLikeCount - daysAgoLikeCount
-        comment = totalCommentCount - daysAgoCommentCount
-        result.append(like + comment)
+    #     like = totalLikeCount - daysAgoLikeCount
+    #     comment = totalCommentCount - daysAgoCommentCount
+    #     result.append(like + comment)
 
-        sql = '''
-        SELECT DISTINCT ON (created_at::date) audience_count
-        FROM public."analyticsApi_profilemetric"
-        WHERE profile_id = %s AND created_at::date = %s
-        ORDER BY created_at::date DESC
-        '''
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id'], daysago])
-            query_result = cursor.fetchone()
-            if not query_result:
-                daysAgoFollowerCount = 0
-            else:
-                daysAgoFollowerCount = query_result[0]
-                if not daysAgoFollowerCount:
-                    daysAgoFollowerCount = 0
-        finally:
-            cursor.close()
-        result.append(totalFollowerCount - daysAgoFollowerCount)
-        result.append(comment)
-        result.append(like)
+    #     sql = '''
+    #     SELECT DISTINCT ON (created_at::date) audience_count
+    #     FROM public."analyticsApi_profilemetric"
+    #     WHERE profile_id = %s AND created_at::date = %s
+    #     ORDER BY created_at::date DESC
+    #     '''
+    #     cursor = connection.cursor()
+    #     try:
+    #         cursor.execute(sql, [self.kwargs['profile_id'], daysago])
+    #         query_result = cursor.fetchone()
+    #         if not query_result:
+    #             daysAgoFollowerCount = 0
+    #         else:
+    #             daysAgoFollowerCount = query_result[0]
+    #             if not daysAgoFollowerCount:
+    #                 daysAgoFollowerCount = 0
+    #     finally:
+    #         cursor.close()
+    #     result.append(totalFollowerCount - daysAgoFollowerCount)
+    #     result.append(comment)
+    #     result.append(like)
 
-        return Response(result)
+    #     return Response(result)
