@@ -132,7 +132,7 @@ def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
     email = EmailMessage('syncAllProfileAndPost at (' + str(datetime.now()) + ')',
-                         'syncAllProfileAndPost', to=['himanshu@poletus.com', 'niles@poletus.com'])
+                         'syncAllProfileAndPost', to=['himanshu@poletus.com', 'niles@poletus.com', 'engineering@poletus.com'])
     email.send()
 
 
