@@ -195,7 +195,7 @@ class RecentPostApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id)
+            profile_id=profile_id).exclude(image_urls__isnull=True)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -222,7 +222,10 @@ class RecentPostApi(generics.ListAPIView):
         post_metrics = PostMetric.objects.filter(
             post_id__in=queryset, is_latest=True)
         serializer = PostWithMetricSerializer(post_metrics, many=True)
-        return Response(serializer.data)
+        if order_by_type == '-':
+            return Response(reversed(sorted(serializer.data, key=lambda x: x['post_id']['created_at'])))
+        else:
+            return Response(sorted(serializer.data, key=lambda x: x['post_id']['created_at']))
 
 
 class OperationPostApi(generics.ListAPIView):
