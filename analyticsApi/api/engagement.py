@@ -222,7 +222,7 @@ class RecentPostApi(generics.ListAPIView):
         post_metrics = PostMetric.objects.filter(
             post_id__in=queryset, is_latest=True)
         serializer = PostWithMetricSerializer(post_metrics, many=True)
-        if order_by_type == '-':
+        if order_by_type:
             return Response(reversed(sorted(serializer.data, key=lambda x: x['post_id']['created_at'])))
         else:
             return Response(sorted(serializer.data, key=lambda x: x['post_id']['created_at']))
