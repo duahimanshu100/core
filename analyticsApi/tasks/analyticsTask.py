@@ -12,6 +12,7 @@ from datetime import datetime
 from analytics.celery import app
 from django.db import connection
 import json
+from django.core.mail import EmailMessage
 
 
 def syncProfiles(is_hourly=False):
@@ -130,6 +131,9 @@ def syncSinglePost(post):
 def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
+    email = EmailMessage('syncAllProfileAndPost at (' + str(datetime.now()) + ')',
+                         'syncAllProfileAndPost', to=['himanshu@poletus.com', 'niles@poletus.com'])
+    email.send()
 
 
 @periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)

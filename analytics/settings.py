@@ -83,7 +83,8 @@ DATABASES = {
         'NAME': 'instapoletusdb',
         'USER': 'instapoletusdb',
         'PASSWORD': 'instapoletusdb',
-        'HOST': 'instapoletusdb.citdu0zqfkwk.ap-south-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
+        # Or an IP Address that your DB is hosted on
+        'HOST': 'instapoletusdb.citdu0zqfkwk.ap-south-1.rds.amazonaws.com',
         'PORT': '5432',
     }
 }
@@ -137,3 +138,9 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ('analyticsApi.tasks.analyticsTask')
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'duahimanshu101@gmail.com'
+EMAIL_HOST_PASSWORD = 'clasmate'
+EMAIL_PORT = 587
