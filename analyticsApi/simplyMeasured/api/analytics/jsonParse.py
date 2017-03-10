@@ -71,7 +71,7 @@ class JsonAnalytics:
                     filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
             # Creating Metrics Count
                 metrics_count.append({'like_count': metrics['post.likes_count'] if metrics['post.likes_count'] else 0,
-                                    'is_latest' : True,
+                                    # 'is_latest' : True,
                                     'post_content_type' : result['attributes']['fields']['primary_content_type'],
                                     'profile_id': result['attributes']['fields']['profile_id'],
                                     'comment_count': metrics['post.replies_count'] if metrics['post.replies_count'] else 0,

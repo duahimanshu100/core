@@ -49,7 +49,7 @@ class AnalyticsCallback:
             print('Post Metric Save Objects at ' +
                   str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostLatestMetric.objects.bulk_create(
-                [PostMetric(**i) for i in metrics_json])
+                [PostLatestMetric(**i) for i in metrics_json])
             # Saving all the metrics
             PostMetric.objects.bulk_create(
                 [PostMetric(**i) for i in metrics_json])

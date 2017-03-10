@@ -61,38 +61,38 @@ def syncAllProfilesPost():
         print('Count is ' + str(count))
 
 
-def syncAllProfilesLikes():
-    '''
-    SyncPost will create or update the posts
-    of simply measured  associated with the token and profiles
-    '''
+# def syncAllProfilesLikes():
+#     '''
+#     SyncPost will create or update the posts
+#     of simply measured  associated with the token and profiles
+#     '''
 
-    for profile in Profile.objects.filter(is_active=True):
-        syncProfileLikes(profile)
+#     for profile in Profile.objects.filter(is_active=True):
+#         syncProfileLikes(profile)
 
 
-def syncProfileLikes(profile):
-    '''
-    syncProfilePosts will create or update the likes
-    of simply measured  associated with the token and profile
-    '''
-    params = {'filter': [
-        # 'post.creation_date.gte(2016-01-01)',
-        'author.id.eq(' + str(profile.profile_id) + ')'],
-        'dimensions': 'post.creation_date.by(hour)',
-        'metrics': 'post.likes_count'
-    }
-    api_token = ApiToken()
-    TOKEN = api_token.get_api_token()
-    if TOKEN:
-        obj = ApiAnalytics(TOKEN)
-        ret_data = obj.get_profile_likes(
-            profile.sm_account.sm_id, profile.profile_id, params)
-        r = Utility.save_and_update_data(
-            ProfileLikeSerializer, ret_data, ProfileLike, None, None)
-        print(r)
-    else:
-        print('Token Not Found')
+# def syncProfileLikes(profile):
+#     '''
+#     syncProfilePosts will create or update the likes
+#     of simply measured  associated with the token and profile
+#     '''
+#     params = {'filter': [
+#         # 'post.creation_date.gte(2016-01-01)',
+#         'author.id.eq(' + str(profile.profile_id) + ')'],
+#         'dimensions': 'post.creation_date.by(hour)',
+#         'metrics': 'post.likes_count'
+#     }
+#     api_token = ApiToken()
+#     TOKEN = api_token.get_api_token()
+#     if TOKEN:
+#         obj = ApiAnalytics(TOKEN)
+#         ret_data = obj.get_profile_likes(
+#             profile.sm_account.sm_id, profile.profile_id, params)
+#         r = Utility.save_and_update_data(
+#             ProfileLikeSerializer, ret_data, ProfileLike, None, None)
+#         print(r)
+#     else:
+#         print('Token Not Found')
 
 
 @app.task
@@ -118,14 +118,14 @@ def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
         print('Token Not Found')
 
 
-def syncSinglePost(post):
-    params = {'filter': [
-        'post.creation_date.gte(1970-01-01)',
-        'author.id.eq(' + str(post.profile_id) + ')',
-        'post.id.eq(' + post.post_id + ')'
-    ]}
-    obj = ApiAnalytics(TOKEN)
-    # obj.get_posts_by_profile(profile, None, params)
+# def syncSinglePost(post):
+#     params = {'filter': [
+#         'post.creation_date.gte(1970-01-01)',
+#         'author.id.eq(' + str(post.profile_id) + ')',
+#         'post.id.eq(' + post.post_id + ')'
+#     ]}
+#     obj = ApiAnalytics(TOKEN)
+#     # obj.get_posts_by_profile(profile, None, params)
 
 
 @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
@@ -142,6 +142,7 @@ def syncAudienceCount():
     syncProfiles()
 
 
+@app.task
 def syncVisionByPost(post_id, post_image):
     print("INTO THE SYNC FOR %s IMAGE(%s)" % (post_id, post_image))
     from analyticsApi.vision import get_vision_results
@@ -183,7 +184,7 @@ def syncVisionByPost(post_id, post_image):
     post_vision.save()
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
 def syncVision():
     from analyticsApi.models import Post, PostVision
     already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
@@ -194,7 +195,8 @@ def syncVision():
         print(post.id)
         if post.image_urls:
             try:
-                syncVisionByPost(post.post_id, post.image_urls[0])
+                syncVisionByPost.apply_async(
+                    args=[post.post_id, post.image_urls[0]])
                 # syncVisionByPost(post, google_vision, aws_vision)
             except Exception:
                 import traceback
@@ -203,6 +205,7 @@ def syncVision():
                 print(post)
 
 
+@app.task
 def saveEngagementAverage(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=1)
@@ -246,6 +249,7 @@ def saveEngagementAverage(profile_id):
         cursor.close()
 
 
+@app.task
 def saveEngagementFrequency(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=2)
@@ -282,27 +286,29 @@ def saveEngagementFrequency(profile_id):
         cursor.close()
 
 
-#@periodic_task(run_every=(crontab(minute=0, hour=0)), name="saveProfileEngagementDaily", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute=0, hour=0)), name="saveProfileEngagementDaily", ignore_result=True)
 def saveProfileEngagementDaily():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Starts')
-        saveEngagementAverage(str(profile.profile_id))
-        saveEngagementFrequency(str(profile.profile_id))
+        saveEngagementAverage.apply_async(args=[str(profile.profile_id)])
+        saveEngagementFrequency.apply_async(args=[str(profile.profile_id)])
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Finished')
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
 def saveProfileCompleteMetric():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving saveProfileCompleteMetric for Profile Id - ' +
               str(profile.profile_id) + ' Starts')
-        saveProfileCompleteMetricByProfile(str(profile.profile_id))
+        saveProfileCompleteMetricByProfile.apply_async(
+            args=[str(profile.profile_id)])
         print('Saving saveProfileCompleteMetric for Profile Id - ' +
               str(profile.profile_id) + ' Finished')
 
 
+@app.task
 def saveProfileCompleteMetricByProfile(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=3)
