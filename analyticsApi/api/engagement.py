@@ -1,5 +1,5 @@
 import dateutil.parser
-from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer
+from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer, PostWithLatestMetricSerializer
 from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.response import Response
@@ -76,14 +76,14 @@ class PostMetricListApi(generics.ListAPIView):
     '''
     List post and post count by profile
     '''
-    serializer_class = PostMetricSerializer
+    serializer_class = PostLatestMetricSerializer
     model = serializer_class.Meta.model
     paginate_by = 100
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id, is_latest=True)
+            profile_id=profile_id)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -219,9 +219,9 @@ class RecentPostApi(generics.ListAPIView):
 
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
-        post_metrics = PostMetric.objects.filter(
-            post_id__in=queryset, is_latest=True)
-        serializer = PostWithMetricSerializer(post_metrics, many=True)
+        post_metrics = PostLatestMetric.objects.filter(
+            post_id__in=queryset)
+        serializer = PostWithLatestMetricSerializer(post_metrics, many=True)
         if order_by_type:
             return Response(reversed(sorted(serializer.data, key=lambda x: x['post_id']['created_at'])))
         else:
@@ -232,7 +232,7 @@ class OperationPostApi(generics.ListAPIView):
     '''
     Most and least like
     '''
-    serializer_class = PostMetricSerializer
+    serializer_class = PostWithMetricSerializer
     model = serializer_class.Meta.model
     paginate_by = 100
 
@@ -256,7 +256,6 @@ class OperationPostApi(generics.ListAPIView):
         type_of_recent = self.request.query_params.get(
             'order', 'most')
         queryset = self.get_queryset()
-        queryset = queryset.filter(is_latest=True)
         # 2016-12-02T17:00:25.910711
         from_date = self.request.query_params.get('from_date', None)
         to_date = self.request.query_params.get('to_date', None)
@@ -273,7 +272,7 @@ class OperationPostApi(generics.ListAPIView):
             queryset = queryset.filter(post_id__primary_content_type=filter)
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
-        serializer = PostWithMetricSerializer(queryset, many=True)
+        serializer = PostWithLatestMetricSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -393,7 +392,7 @@ class FilterEngagementPostApi(generics.ListAPIView):
         sql = '''
         SELECT pf.name, cast(sum(pm.engagement_count) as integer) as s_e_c 
         FROM public."analyticsApi_postfilter" pf 
-        LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=pf.post_id_id AND pm.is_latest = True)
+        LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=pf.post_id_id)
         WHERE pf.profile_id = %s GROUP BY pf.name
         ORDER BY s_e_C DESC
         '''
