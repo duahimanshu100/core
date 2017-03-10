@@ -1,10 +1,10 @@
 import dateutil.parser
-from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer, PostWithLatestMetricSerializer
+from analyticsApi.serializers import PostMetricSerializer, PostsListSerializer, PostWithMetricSerializer, PostHashTagSerializer, PostFilterSerializer, PostWithLatestMetricSerializer, PostLatestMetricSerializer
 from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.response import Response
 from analyticsApi.utility import Utility
-from analyticsApi.models import PostMetric, ProfileEngagementMetric
+from analyticsApi.models import PostMetric, ProfileEngagementMetric, PostLatestMetric
 from django.db import connection
 from django.db.models import Max
 
