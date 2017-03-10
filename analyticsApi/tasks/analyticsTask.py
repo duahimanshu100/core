@@ -128,7 +128,7 @@ def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
 #     # obj.get_posts_by_profile(profile, None, params)
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
@@ -137,7 +137,7 @@ def syncAllProfileAndPost():
     email.send()
 
 
-@periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
 
@@ -184,7 +184,7 @@ def syncVisionByPost(post_id, post_image):
     post_vision.save()
 
 
-# @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
 def syncVision():
     from analyticsApi.models import Post, PostVision
     already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
@@ -207,6 +207,7 @@ def syncVision():
 
 @app.task
 def saveEngagementAverage(profile_id):
+    print('Engagement Avg For ' + str(profile_id))
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=1)
     sql = '''SELECT pm.engagement_count,
@@ -214,8 +215,8 @@ def saveEngagementAverage(profile_id):
         THEN EXTRACT(HOUR FROM post.created_at)::integer ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer 
         END AS "HOUR_OF_POSTING", post.created_at::time, 
         EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
-        LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) 
-        WHERE pm.is_latest=True AND post.profile_id = %s '''
+        LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=post.post_id) 
+        WHERE post.profile_id = %s'''
     cursor = connection.cursor()
     try:
         cursor.execute(sql, [profile_id])
@@ -223,8 +224,10 @@ def saveEngagementAverage(profile_id):
         for i in range(24):
             for j in range(7):
                 arr.append([i, j, 0, 0])
-
         for row in cursor.fetchall():
+            row_zero = row[0]
+            if not row_zero:
+                row_zero = 0
             tmp_hour = row[1]
             tmp_day = row[3]
             if(tmp_hour == 24):
@@ -233,7 +236,7 @@ def saveEngagementAverage(profile_id):
                 if(tmp_day == 7):
                     tmp_day = 0
             arr[tmp_hour * 7 + tmp_day][2] += 1
-            arr[tmp_hour * 7 + tmp_day][3] += row[0]
+            arr[tmp_hour * 7 + tmp_day][3] += row_zero
         for elem in arr:
             tmp = 0
             if elem[2]:
@@ -251,6 +254,7 @@ def saveEngagementAverage(profile_id):
 
 @app.task
 def saveEngagementFrequency(profile_id):
+    print('Engagement Freq For ' + str(profile_id))
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=2)
     sql = '''SELECT pm.engagement_count, 
@@ -259,8 +263,8 @@ def saveEngagementFrequency(profile_id):
     ELSE (EXTRACT(HOUR FROM post.created_at) + 1)::integer 
     END AS "HOUR_OF_POSTING", post.created_at::time, 
     EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
-    LEFT JOIN public."analyticsApi_postmetric" pm ON (pm.post_id_id=post.post_id) 
-    WHERE pm.is_latest=True AND post.profile_id = %s '''
+    LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=post.post_id) 
+    WHERE post.profile_id = %s '''
     cursor = connection.cursor()
     try:
         cursor.execute(sql, [profile_id])
@@ -286,7 +290,7 @@ def saveEngagementFrequency(profile_id):
         cursor.close()
 
 
-# @periodic_task(run_every=(crontab(minute=0, hour=0)), name="saveProfileEngagementDaily", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=0, hour=0)), name="saveProfileEngagementDaily", ignore_result=True)
 def saveProfileEngagementDaily():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving Engagement for Profile Id - ' +
@@ -297,7 +301,7 @@ def saveProfileEngagementDaily():
               str(profile.profile_id) + ' Finished')
 
 
-# @periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
 def saveProfileCompleteMetric():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving saveProfileCompleteMetric for Profile Id - ' +
@@ -310,6 +314,7 @@ def saveProfileCompleteMetric():
 
 @app.task
 def saveProfileCompleteMetricByProfile(profile_id):
+    print('Profile Complete Metric Profile' + str(profile_id))
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=3)
     import datetime
@@ -335,15 +340,15 @@ def saveProfileCompleteMetricByProfile(profile_id):
     result.append(totalFollowerCount)
     sql = '''
     SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
-    FROM public."analyticsApi_postmetric" pm
-    WHERE pm.profile_id = %s AND pm.is_latest = True
+    FROM public."analyticsApi_postlatestmetric" pm
+    WHERE pm.profile_id = %s
     '''
     cursor = connection.cursor()
     try:
         cursor.execute(sql, [profile_id])
         query_result = cursor.fetchone()
-        totalCommentCount = query_result[0]
-        totalLikeCount = query_result[1]
+        totalCommentCount = query_result[0] or 0
+        totalLikeCount = query_result[1] or 0
         result.append(totalCommentCount)
         result.append(totalLikeCount)
     finally:

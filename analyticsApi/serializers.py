@@ -280,8 +280,8 @@ class PostsListWithVisionSerializer(serializers.ModelSerializer):
         data = super(PostsListWithVisionSerializer,
                      self).to_representation(instance)
         post_vision = PostVision.objects.filter(post=instance)
-        post_metric = PostMetric.objects.filter(
-            post_id=instance, is_latest=True).first()
+        post_metric = PostLatestMetric.objects.filter(
+            post_id=instance).first()
         post_hash_tags = PostHashTag.objects.filter(
             post_id=instance)
         post_filters = PostFilter.objects.filter(
@@ -289,7 +289,7 @@ class PostsListWithVisionSerializer(serializers.ModelSerializer):
         if post_vision:
             data['post_vision'] = PostsVisionSerializer(post_vision[0]).data
         if post_metric:
-            data['post_metric'] = PostMetricSerializer(post_metric).data
+            data['post_metric'] = PostLatestMetricSerializer(post_metric).data
         if post_hash_tags:
             data['post_hash_tags'] = PostHashTagSerializer(
                 post_hash_tags, many=True).data
