@@ -1,7 +1,7 @@
 from analyticsApi.utility import Utility
 from analyticsApi.simplyMeasured.api.analytics.jsonParse import JsonAnalytics
 from analyticsApi.serializers import PostSerializer, PostShareSerializer, PostSerializerCreate, PostHashTagSerializer, PostLikeSerializer, PostCommentSerializer, PostFilterSerializer, PostMetricSerializer
-from analyticsApi.models import Post, PostHashTag, PostFilter, PostMetric
+from analyticsApi.models import Post, PostHashTag, PostFilter, PostMetric, PostLatestMetric
 from datetime import datetime
 
 
@@ -31,16 +31,25 @@ class AnalyticsCallback:
                            PostSerializerCreate(post_json, many=True).data)
             hashes = filter(filter_only_create_post, hash_json)
             filters = filter(filter_only_create_post, filters_json)
-
+            print('Post Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             Post.objects.bulk_create([Post(**i) for i in posts])
+            print('Post Hashtag Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostHashTag.objects.bulk_create([PostHashTag(**i) for i in hashes])
+            print('Post Filter Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostFilter.objects.bulk_create([PostFilter(**i) for i in filters])
 
             post_ids = [i['post_id'] for i in post_json]
-
-            PostMetric.objects.filter(
-                post_id__in=post_ids, is_latest=True).update(is_latest=False)
-
+            print('Post Metric To False Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
+            PostLatestMetric.objects.filter(
+                post_id__in=post_ids).delete()
+            print('Post Metric Save Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
+            PostLatestMetric.objects.bulk_create(
+                [PostMetric(**i) for i in metrics_json])
             # Saving all the metrics
             PostMetric.objects.bulk_create(
                 [PostMetric(**i) for i in metrics_json])

@@ -54,7 +54,8 @@ def syncAllProfilesPost():
         count = count + 1
         print('Profile Id Sync Starts for ' +
               str(profile.profile_id) + ' at ' + str(datetime.now()))
-        syncProfilePosts(profile.profile_id, profile.sm_account.sm_id, TOKEN)
+        syncProfilePosts.apply_async(
+            args=[profile.profile_id, profile.sm_account.sm_id, TOKEN])
         print('Profile Id Sync Completed for ' +
               str(profile.profile_id) + ' at ' + str(datetime.now()))
         print('Count is ' + str(count))
@@ -94,7 +95,7 @@ def syncProfileLikes(profile):
         print('Token Not Found')
 
 
-#@app.task()
+@app.task
 def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
     print(profile_id, sm_acc_id, TOKEN)
     '''
@@ -136,12 +137,11 @@ def syncAllProfileAndPost():
     email.send()
 
 
-@periodic_task(run_every=(crontab()), name="syncAudienceCount", ignore_result=True)
+@periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
 def syncAudienceCount():
     syncProfiles()
 
 
-#@app.task()
 def syncVisionByPost(post_id, post_image):
     print("INTO THE SYNC FOR %s IMAGE(%s)" % (post_id, post_image))
     from analyticsApi.vision import get_vision_results
@@ -182,11 +182,8 @@ def syncVisionByPost(post_id, post_image):
     post_vision.aws_detect_labels = aws_detect_labels
     post_vision.save()
 
-    # post_vision
 
-#@periodic_task(run_every=(crontab(minute=50, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
-
-
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllVisionProfiles", ignore_result=True)
 def syncVision():
     from analyticsApi.models import Post, PostVision
     already_visioned = PostVision.objects.all().values_list('post_id', flat=True)
@@ -197,7 +194,7 @@ def syncVision():
         print(post.id)
         if post.image_urls:
             try:
-                syncVisionByPost.delay(post.post_id, post.image_urls[0])
+                syncVisionByPost(post.post_id, post.image_urls[0])
                 # syncVisionByPost(post, google_vision, aws_vision)
             except Exception:
                 import traceback
@@ -206,7 +203,6 @@ def syncVision():
                 print(post)
 
 
-#@app.task()
 def saveEngagementAverage(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=1)
@@ -250,7 +246,6 @@ def saveEngagementAverage(profile_id):
         cursor.close()
 
 
-#@app.task()
 def saveEngagementFrequency(profile_id):
     profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
         profile_id=profile_id, engagement_type=2)
@@ -292,7 +287,117 @@ def saveProfileEngagementDaily():
     for profile in Profile.objects.filter(is_active=True):
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Starts')
-        saveEngagementAverage.delay(str(profile.profile_id))
-        saveEngagementFrequency.delay(str(profile.profile_id))
+        saveEngagementAverage(str(profile.profile_id))
+        saveEngagementFrequency(str(profile.profile_id))
         print('Saving Engagement for Profile Id - ' +
               str(profile.profile_id) + ' Finished')
+
+
+@periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="saveProfileCompleteMetric", ignore_result=True)
+def saveProfileCompleteMetric():
+    for profile in Profile.objects.filter(is_active=True):
+        print('Saving saveProfileCompleteMetric for Profile Id - ' +
+              str(profile.profile_id) + ' Starts')
+        saveProfileCompleteMetricByProfile(str(profile.profile_id))
+        print('Saving saveProfileCompleteMetric for Profile Id - ' +
+              str(profile.profile_id) + ' Finished')
+
+
+def saveProfileCompleteMetricByProfile(profile_id):
+    profile_engagement_metric, created = ProfileEngagementMetric.objects.get_or_create(
+        profile_id=profile_id, engagement_type=3)
+    import datetime
+    daysago = datetime.datetime.now() + datetime.timedelta(-10)
+    daysago = daysago.strftime("%Y-%m-%d")
+    result = []
+    sql = '''
+    SELECT audience_count
+    FROM public."analyticsApi_profilemetric"
+    WHERE profile_id = %s ORDER BY created_at DESC LIMIT 1
+    '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id])
+        query_result = cursor.fetchone()
+        if query_result:
+            totalFollowerCount = query_result[0]
+        else:
+            totalFollowerCount = 0
+    finally:
+        cursor.close()
+
+    result.append(totalFollowerCount)
+    sql = '''
+    SELECT SUM(pm.comment_count) as totalCommentCount,SUM(pm.like_count) as totalLikeCount 
+    FROM public."analyticsApi_postmetric" pm
+    WHERE pm.profile_id = %s AND pm.is_latest = True
+    '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id])
+        query_result = cursor.fetchone()
+        totalCommentCount = query_result[0]
+        totalLikeCount = query_result[1]
+        result.append(totalCommentCount)
+        result.append(totalLikeCount)
+    finally:
+        cursor.close()
+
+    sql = '''
+    SELECT SUM(a.like_count) as totalLike, SUM(a.comment_count)
+     as totalComment, SUM(a.engagement_count) as totalEngage
+     FROM (SELECT  DISTINCT ON (post_id_id)
+     like_count, engagement_count,comment_count
+     FROM public."analyticsApi_postmetric"
+     WHERE profile_id = %s
+     AND created_at::date = %s) a
+    '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id, daysago])
+        query_result = cursor.fetchone()
+        if not query_result:
+            query_result = (0, 0, 0)
+    finally:
+        cursor.close()
+
+    daysAgoLikeCount = query_result[0]
+    if not daysAgoLikeCount:
+        daysAgoLikeCount = 0
+    daysAgoCommentCount = query_result[1]
+    if not daysAgoCommentCount:
+        daysAgoCommentCount = 0
+    daysAgoEngagementCount = query_result[2]
+    if not daysAgoEngagementCount:
+        daysAgoEngagementCount = 0
+
+    like = totalLikeCount - daysAgoLikeCount
+    comment = totalCommentCount - daysAgoCommentCount
+    result.append(like + comment)
+
+    sql = '''
+    SELECT DISTINCT ON (created_at::date) audience_count
+    FROM public."analyticsApi_profilemetric"
+    WHERE profile_id = %s AND created_at::date = %s
+    ORDER BY created_at::date DESC
+    '''
+    cursor = connection.cursor()
+    try:
+        cursor.execute(sql, [profile_id, daysago])
+        query_result = cursor.fetchone()
+        if not query_result:
+            daysAgoFollowerCount = 0
+        else:
+            daysAgoFollowerCount = query_result[0]
+            if not daysAgoFollowerCount:
+                daysAgoFollowerCount = 0
+    finally:
+        cursor.close()
+    result.append(totalFollowerCount - daysAgoFollowerCount)
+    result.append(comment)
+    result.append(like)
+    result = list(map(int, result))
+    profile_engagement_metric.profile_id = profile_id
+    profile_engagement_metric.json_response = result
+    profile_engagement_metric.engagement_type = 3
+    profile_engagement_metric.save()

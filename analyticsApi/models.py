@@ -136,6 +136,25 @@ class Post(models.Model):
         return str(self.profile_id) + ' - ' + str(self.url)
 
 
+class PostLatestMetric(models.Model):
+    '''
+    Simply Measured Post Hashtags
+    '''
+    profile_id = models.CharField(max_length=200, db_index=True)
+    post_id = models.ForeignKey(Post, to_field='post_id', db_index=True)
+    like_count = models.BigIntegerField(default=0)
+    comment_count = models.BigIntegerField(default=0)
+    share_count = models.BigIntegerField(default=0)
+    engagement_count = models.BigIntegerField(default=0)
+    dislike_count = models.BigIntegerField(default=0)
+    post_content_type = models.CharField(
+        max_length=200, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    def __str__(self):
+        return str(self.post_id)
+
+
 class PostMetric(models.Model):
     '''
     Simply Measured Post Hashtags
@@ -256,7 +275,8 @@ class ProfileEngagementMetric(models.Model):
     '''
     TOKEN_CHOICES = (
         (1, "Average_Engagement"),
-        (2, "Frequency_Engagement"))
+        (2, "Frequency_Engagement"),
+        (3, "Complete_Metrics"))
     profile_id = models.CharField(max_length=200, blank=True, db_index=True)
     engagement_type = models.IntegerField(
         choices=TOKEN_CHOICES, default=1, db_index=True)
