@@ -127,9 +127,23 @@ def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
 #     obj = ApiAnalytics(TOKEN)
 #     # obj.get_posts_by_profile(profile, None, params)
 
+def exportToFile():
+    import tempfile
+    import os
+    file_name, file_path = tempfile.mkstemp()
+    cursor = connection.cursor()
+    f = open(file_path, 'w')
+    cursor.copy_to(f, 'public."analyticsApi_postlatestmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
+                                                                                  'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    f = open(file_path, 'r')
+    cursor.copy_from(f, 'public."analyticsApi_postmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
+                                                                              'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    os.unlink(file_path)
+
 
 @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
+    exportToFile()
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
     email = EmailMessage('syncAllProfileAndPost at (' + str(datetime.now()) + ')',

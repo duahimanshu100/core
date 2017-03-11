@@ -50,10 +50,10 @@ class AnalyticsCallback:
                   str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostLatestMetric.objects.bulk_create(
                 [PostLatestMetric(**i) for i in metrics_json])
-            print('Post Old Metric To False Objects at ' +
-                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
-            # Saving all the metrics
-            PostMetric.objects.bulk_create(
-                [PostMetric(**i) for i in metrics_json])
+            # print('Post Old Metric To False Objects at ' +
+            #       str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
+            # # Saving all the metrics
+            # PostMetric.objects.bulk_create(
+            #     [PostMetric(**i) for i in metrics_json])
             print('Finished  Saving Posts & Related Data at ' +
                   str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
