@@ -42,14 +42,16 @@ class AnalyticsCallback:
             PostFilter.objects.bulk_create([PostFilter(**i) for i in filters])
 
             post_ids = [i['post_id'] for i in post_json]
-            print('Post Metric To False Objects at ' +
+            print('Post Metric To Deleted at ' +
                   str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostLatestMetric.objects.filter(
                 post_id__in=post_ids).delete()
-            print('Post Metric Save Objects at ' +
+            print('Post Latest Metric Save Objects at ' +
                   str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             PostLatestMetric.objects.bulk_create(
                 [PostLatestMetric(**i) for i in metrics_json])
+            print('Post Old Metric To False Objects at ' +
+                  str(datetime.now()) + ' - ProfileId - ' + str(profile_id))
             # Saving all the metrics
             PostMetric.objects.bulk_create(
                 [PostMetric(**i) for i in metrics_json])
