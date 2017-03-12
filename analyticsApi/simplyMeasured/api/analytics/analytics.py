@@ -38,12 +38,12 @@ class ApiAnalytics(ApiSimplyMeasured):
     #     for profile in Profile.objects.filter(sm_account=account):
     #         self.get_post_by_profile(profile, limit)
 
-    def get_posts(self, sm_account_id, query_params=None):
+    def get_posts(self, sm_account_id, query_params=None, extra_data=None):
         self.url = self.url + str(sm_account_id) + '/posts'
         if query_params:
             self.payload.update(**query_params)
             # self.payload = {**self.payload, **query_params}
-        result = self.get_all(AnalyticsCallback.get_posts_by_profile_callback)
+        result = self.get_all(AnalyticsCallback.get_posts_by_profile_callback, extra_data)
 
     def get_profiles(self, channel_type='instagram'):
         '''

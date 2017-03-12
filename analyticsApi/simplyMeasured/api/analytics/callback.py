@@ -8,12 +8,12 @@ from datetime import datetime
 class AnalyticsCallback:
 
     @staticmethod
-    def get_posts_by_profile_callback(data):
+    def get_posts_by_profile_callback(data, extra_data=None):
         '''
         Get and save all post according to profile
         '''
         post_json, hash_json, metrics_json, filters_json = JsonAnalytics.get_post_json(
-            data)
+            data, extra_data)
         if(post_json):
             profile_id = post_json[0]['profile_id']
             print('Start Saving Posts & Related Data at ' +

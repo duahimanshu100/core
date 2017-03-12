@@ -1,12 +1,12 @@
 class JsonAnalytics:
 
     @staticmethod
-    def get_post_json(results):
+    def get_post_json(results, extra_data):
         '''
         Convert simply measured data sources to json array according to model
         '''
         lst_json = []
-        hash_tags =[]
+        hash_tags = []
         metrics_count = []
         filters = []
 
@@ -65,20 +65,23 @@ class JsonAnalytics:
 
             #     Creating hashtags list
                 if(result['attributes']['fields']['post_hash']):
-                    hash_tags = hash_tags + [{'name':i,'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']} for i in result['attributes']['fields']['post_hash']]
+                    hash_tags = hash_tags + [{'name': i, 'post_id_id': result['attributes']['fields']['post_id'], 'profile_id':result[
+                        'attributes']['fields']['profile_id']} for i in result['attributes']['fields']['post_hash']]
             #     Creating Filter list
                 if (result['attributes']['fields']['post_filter']):
-                    filters.append({'name':result['attributes']['fields']['post_filter'],'post_id_id':result['attributes']['fields']['post_id'],'profile_id':result['attributes']['fields']['profile_id']})
+                    filters.append({'name': result['attributes']['fields']['post_filter'], 'post_id_id': result[
+                                   'attributes']['fields']['post_id'], 'profile_id': result['attributes']['fields']['profile_id']})
             # Creating Metrics Count
                 metrics_count.append({'like_count': metrics['post.likes_count'] if metrics['post.likes_count'] else 0,
-                                    # 'is_latest' : True,
-                                    'post_content_type' : result['attributes']['fields']['primary_content_type'],
-                                    'profile_id': result['attributes']['fields']['profile_id'],
-                                    'comment_count': metrics['post.replies_count'] if metrics['post.replies_count'] else 0,
-                                    'share_count': metrics['post.shares_count'] if metrics['post.shares_count'] else 0,
-                                    'engagement_count': metrics['post.engagement_total'] if metrics['post.engagement_total'] else 0,
-                                    'dislike_count': metrics['post.dislikes_count'] if metrics['post.dislikes_count'] else 0,
-                                    'post_id_id': result['attributes']['fields']['post_id']})
+                                      # 'is_latest' : True,
+                                      'post_content_type': result['attributes']['fields']['primary_content_type'],
+                                      'profile_id': result['attributes']['fields']['profile_id'],
+                                      'comment_count': metrics['post.replies_count'] if metrics['post.replies_count'] else 0,
+                                      'share_count': metrics['post.shares_count'] if metrics['post.shares_count'] else 0,
+                                      'engagement_count': metrics['post.engagement_total'] if metrics['post.engagement_total'] else 0,
+                                      'dislike_count': metrics['post.dislikes_count'] if metrics['post.dislikes_count'] else 0,
+                                      'post_id_id': result['attributes']['fields']['post_id'],
+                                      'created_at': extra_data})
 
             except (KeyError, TypeError) as tp:
                 import traceback

@@ -42,7 +42,7 @@ class ApiSimplyMeasured(object):
                             params=self.payload,
                             headers=self.headers)
 
-    def get_all(self, callback=None):
+    def get_all(self, callback=None, extra_data=None):
         '''
             GET methods for all pagging api the apis
             deafult limit is of 1000
@@ -53,7 +53,7 @@ class ApiSimplyMeasured(object):
         if not callback:
             lst_result.append(result)
         else:
-            callback(self.parseJson(result.content))
+            callback(self.parseJson(result.content), extra_data)
         count_hit = 1
         if result and result.content and \
                 SmUtility.get_remaining_page_count(result.content):

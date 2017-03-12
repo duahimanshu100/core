@@ -112,12 +112,17 @@ def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
     # TOKEN = api_token.get_api_token()
     if (TOKEN):
         obj = ApiAnalytics(TOKEN)
+        extra_data = datetime.now()
         # print(params)
-        obj.get_posts(sm_acc_id, params)
+        obj.get_posts(sm_acc_id, params, extra_data)
     else:
         print('Token Not Found')
 
 
+def split_list(alist, wanted_parts=1):
+    length = len(alist)
+    return [alist[i * length // wanted_parts: (i + 1) * length // wanted_parts]
+            for i in range(wanted_parts)]
 # def syncSinglePost(post):
 #     params = {'filter': [
 #         'post.creation_date.gte(1970-01-01)',
@@ -127,14 +132,27 @@ def syncProfilePosts(profile_id, sm_acc_id, TOKEN):
 #     obj = ApiAnalytics(TOKEN)
 #     # obj.get_posts_by_profile(profile, None, params)
 
+
+@periodic_task(run_every=(crontab(minute=0, hour='*/3')), name="deletePostsWithoutImage", ignore_result=True)
+def deletePostsWithoutImage():
+    print('Deleting Starts at ' +
+          str(datetime.now()))
+    from analyticsApi.models import Post
+    postsToBeDeleted = Post.objects.filter(
+        image_urls__isnull=True).values_list('pk')
+    Post.objects.filter(pk__in=postsToBeDeleted).delete()
+    print('Deleting Finished For Post Id :- ' +
+          str(datetime.now()))
+
+
 def exportToFile():
     import tempfile
     import os
     file_name, file_path = tempfile.mkstemp()
     print('Exporting Starts at ' +
           str(datetime.now()))
-    print('File name is ' + file_name)
-    print('File path is ' + file_path)
+    print('File name is ' + str(file_name))
+    print('File path is ' + str(file_path))
     cursor = connection.cursor()
     f = open(file_path, 'w')
     cursor.copy_to(f, 'public."analyticsApi_postlatestmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
