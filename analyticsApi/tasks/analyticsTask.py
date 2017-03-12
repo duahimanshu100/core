@@ -131,13 +131,23 @@ def exportToFile():
     import tempfile
     import os
     file_name, file_path = tempfile.mkstemp()
+    print('Exporting Starts at ' +
+          str(datetime.now()))
+    print('File name is ' + file_name)
+    print('File path is ' + file_path)
     cursor = connection.cursor()
     f = open(file_path, 'w')
     cursor.copy_to(f, 'public."analyticsApi_postlatestmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
                                                                                   'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    print('Exporting Ends at ' +
+          str(datetime.now()))
+    print('Importing Starts at ' +
+          str(datetime.now()))
     f = open(file_path, 'r')
     cursor.copy_from(f, 'public."analyticsApi_postmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
                                                                               'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    print('Importing Ends at ' +
+          str(datetime.now()))
     os.unlink(file_path)
 
 
