@@ -276,7 +276,11 @@ class ProfileEngagementMetric(models.Model):
     TOKEN_CHOICES = (
         (1, "Average_Engagement"),
         (2, "Frequency_Engagement"),
-        (3, "Complete_Metrics"))
+        (3, "Complete_Metrics"),
+        (4, "Average_Engagement_Six_Months "),
+        (5, "Average_Engagement_One_Year"),
+        (6, "Frequency_Engagement_Six_Months"),
+        (7, "Frequency_Engagement_One_Year"))
     profile_id = models.CharField(max_length=200, blank=True, db_index=True)
     engagement_type = models.IntegerField(
         choices=TOKEN_CHOICES, default=1, db_index=True)

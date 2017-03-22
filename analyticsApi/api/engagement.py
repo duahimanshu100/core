@@ -50,8 +50,15 @@ class EngagementAverageApi(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kw):
         profile_id = self.kwargs['profile_id']
+        dic_of_engagement_types = {
+            'all': 1,
+            'past_six_months': 4,
+            'past_year': 5
+        }
+        operation = dic_of_engagement_types.get(
+            self.request.query_params.get('timeseries', 'all'), 1)
         queryset = ProfileEngagementMetric.objects.filter(
-            profile_id=profile_id, engagement_type=1).first()
+            profile_id=profile_id, engagement_type=operation).first()
         response = Response(queryset.json_response, status=status.HTTP_200_OK)
         return response
 
@@ -66,8 +73,15 @@ class EngagementFrequencyApi(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kw):
         profile_id = self.kwargs['profile_id']
+        dic_of_engagement_types = {
+            'all': 2,
+            'past_six_months': 6,
+            'past_year': 7
+        }
+        operation = dic_of_engagement_types.get(
+            self.request.query_params.get('timeseries', 'all'), 2)
         queryset = ProfileEngagementMetric.objects.filter(
-            profile_id=profile_id, engagement_type=2).first()
+            profile_id=profile_id, engagement_type=operation).first()
         response = Response(queryset.json_response, status=status.HTTP_200_OK)
         return response
 
