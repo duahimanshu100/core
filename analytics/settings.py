@@ -135,7 +135,8 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 
-CELERY_IMPORTS = ('analyticsApi.tasks.analyticsTask')
+CELERY_IMPORTS = ('analyticsApi.tasks.analyticsTask',
+                  'analyticsApi.tasks.analyticsTaskProfileMetric')
 
 CORS_ORIGIN_ALLOW_ALL = True
 
