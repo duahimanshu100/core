@@ -133,13 +133,13 @@ def split_list(alist, wanted_parts=1):
 #     # obj.get_posts_by_profile(profile, None, params)
 
 
-@periodic_task(run_every=(crontab(minute=0, hour='*/3')), name="deletePostsWithoutImage", ignore_result=True)
+@periodic_task(run_every=(crontab(minute=5, hour='*')), name="deletePostsWithoutImage", ignore_result=True)
 def deletePostsWithoutImage():
     print('Deleting Starts at ' +
           str(datetime.now()))
     from analyticsApi.models import Post
     postsToBeDeleted = Post.objects.filter(
-        image_urls__isnull=True).values_list('pk')
+        image_urls__isnull=True).values_list('pk')[:500]
     Post.objects.filter(pk__in=postsToBeDeleted).delete()
     print('Deleting Finished For Post Id :- ' +
           str(datetime.now()))
