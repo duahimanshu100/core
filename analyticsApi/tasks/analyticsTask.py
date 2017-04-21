@@ -133,7 +133,7 @@ def split_list(alist, wanted_parts=1):
 #     # obj.get_posts_by_profile(profile, None, params)
 
 
-@periodic_task(run_every=(crontab(minute='*/5')), name="deletePostsWithoutImage", ignore_result=True)
+# @periodic_task(run_every=(crontab(minute='*/5')), name="deletePostsWithoutImage", ignore_result=True)
 def deletePostsWithoutImage():
     print('Deleting Starts at ' +
           str(datetime.now()))
