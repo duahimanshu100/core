@@ -129,45 +129,47 @@ def split_list(alist, wanted_parts=1):
 
 def markInactivePosts():
     lst_of_proxies = ['67.220.250.140:21304','173.246.178.157:21237','173.246.189.116:21235','67.220.250.90:21263','172.102.195.220:21234','104.168.8.122:21305','107.173.221.100:21269','173.246.178.244:21303','173.246.189.185:21278','67.220.250.2:21268','172.102.195.134:21249','107.173.221.74:21309','104.168.8.125:21296','172.102.195.63:21245','172.102.195.60:21322','104.168.8.65:21250','107.173.221.62:21328','173.246.178.84:21287','173.246.189.114:21304','67.220.250.105:21316','172.102.195.253:21288','104.168.8.79:21267','107.173.221.72:21262','67.220.250.107:21238','104.168.8.58:21253','107.173.221.31:21280','173.246.189.245:21281','67.220.250.20:21284','172.102.195.194:21260','104.168.8.95:21238','107.173.221.30:21290','173.246.178.134:21276','173.246.189.204:21232','67.220.250.53:21261','172.102.195.23:21325','104.168.8.76:21261','173.246.178.226:21282','107.173.221.60:21322','104.168.8.36:21257','173.246.178.99:21309','173.246.189.177:21292','67.220.250.125:21267','172.102.195.131:21306','104.168.8.116:21248','107.173.221.55:21314','173.246.178.97:21274','173.246.189.95:21266','67.220.250.33:21247','172.102.195.26:21237','107.173.221.71:21256']
-    lst_of_proxies = ['67.220.250.140:21304']
-    proxy = random.choice(lst_of_proxies)
-    proxies = {'http': 'http://username:password@ip:port', 'https': 'http://usernamepassword@ip:port'}
-
-    proxy_obj = {
-        'http': 'http://enginepole9504:zykmvdjs7r@' + proxy,
-        'https': 'https://enginepole9504:zykmvdjs7r@' + proxy,
-    }
     count = Post.objects.filter(
         image_urls__isnull=False, is_deleted_by_instagram_user=False).count()
-    chunk_size = 1000
+    chunk_size = int(count / len(lst_of_proxies))
+    counter = 0
     for i in range(0, count, chunk_size):
+        proxy_obj = {
+            'http': 'http://enginepole9504:zykmvdjs7r@' + lst_of_proxies[counter],
+            'https': 'https://enginepole9504:zykmvdjs7r@'+ lst_of_proxies[counter],
+        }
         posts = Post.objects.filter(
-            image_urls__isnull=False, is_deleted_by_instagram_user=False)[i:i + chunk_size]
-        for post in posts:
-            postImageCheckAndMark.apply_async(args=[post.post_id, post.image_urls, proxy_obj])
+            image_urls__isnull=False, is_deleted_by_instagram_user=False).values_list('post_id', 'image_urls')[i:i + chunk_size]
+        counter = counter + 1
+        listOfPost = list(posts)
+        postImageCheckAndMark.apply_async(args=[listOfPost, proxy_obj])
+        # for post in posts:
+        #     postImageCheckAndMark.apply_async(args=[post.post_id, post.image_urls, proxy_obj])
 
 
 @app.task
-def postImageCheckAndMark(post_id, image_urls, proxy):
-    if(image_urls):
-        image_url = image_urls[0]
-        print('Got the post id ' + str(post_id))
-        print('Got the post url ' + image_url)
-        try:
-                req = requests.get(image_url, proxies=proxy)
-                print('--------------------------------Image Status Code-------------------- For  ')
-                print(str(post_id) +  '          --------             ' + str(req.status_code))
-                print('--------------------------------Image Status Code-------------------- For  ')
-                if(req.status_code == 404):
-                    Post.objects.filter(post_id=post_id).update(is_deleted_by_instagram_user=True)
-                    print('Image not found for ' + str(post_id))
-        except Exception as e:
-            import sys
-            print(sys.exc_info())
-            # print(e.message)
-            print('Got exception for ' + str(post_id))
-    else:
-        return None
+def postImageCheckAndMark(posts, proxy):
+    for post in posts:
+        if(post[1][0]):
+            image_url = post[1][0]
+            post_id = post[0]
+            print('Got the post id ' + str(post_id))
+            print('Got the post url ' + image_url)
+            try:
+                    req = requests.get(image_url, proxies=proxy)
+                    print('--------------------------------Image Status Code-------------------- For  ')
+                    print(str(post_id) +  '          --------             ' + str(req.status_code))
+                    print('--------------------------------Image Status Code-------------------- For  ')
+                    if(req.status_code == 404):
+                        Post.objects.filter(post_id=post_id).update(is_deleted_by_instagram_user=True)
+                        print('Image not found for ' + str(post_id))
+            except Exception as e:
+                import sys
+                print(sys.exc_info())
+                # print(e.message)
+                print('Got exception for ' + str(post_id))
+        else:
+            return None
 
 # def syncSinglePost(post):
 #     params = {'filter': [
