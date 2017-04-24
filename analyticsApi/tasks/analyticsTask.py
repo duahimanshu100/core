@@ -135,8 +135,8 @@ def markInactivePosts():
     counter = 0
     for i in range(0, count, chunk_size):
         proxy_obj = {
-            'http': 'http://enginepole9504:zykmvdjs7r@' + lst_of_proxies[counter],
-            'https': 'https://enginepole9504:zykmvdjs7r@'+ lst_of_proxies[counter],
+            'http': 'http://enginepole9504:zykmvdjs7r@' + lst_of_proxies[counter%(len(lst_of_proxies) - 1)],
+            'https': 'https://enginepole9504:zykmvdjs7r@'+ lst_of_proxies[counter%(len(lst_of_proxies) - 1)],
         }
         posts = Post.objects.filter(
             image_urls__isnull=False, is_deleted_by_instagram_user=False).values_list('post_id', 'image_urls')[i:i + chunk_size]
