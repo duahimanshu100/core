@@ -139,10 +139,11 @@ def markInactivePosts():
             'https': 'https://enginepole9504:zykmvdjs7r@'+ lst_of_proxies[counter%(len(lst_of_proxies) - 1)],
         }
         posts = Post.objects.filter(
-            image_urls__isnull=False, is_deleted_by_instagram_user=False).values_list('post_id', 'image_urls')[i:i + chunk_size]
+            image_urls__isnull=False, is_deleted_by_instagram_user=False).order_by('-id').values_list('post_id', 'image_urls')[i:i + chunk_size]
         counter = counter + 1
         listOfPost = list(posts)
-        postImageCheckAndMark.apply_async(args=[listOfPost, proxy_obj])
+        postImageCheckAndMark(listOfPost, proxy_obj)
+        # postImageCheckAndMark.apply_async(args=[listOfPost, proxy_obj])
         # for post in posts:
         #     postImageCheckAndMark.apply_async(args=[post.post_id, post.image_urls, proxy_obj])
 
