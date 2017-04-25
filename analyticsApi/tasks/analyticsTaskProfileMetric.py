@@ -21,7 +21,7 @@ def saveEngagementAverageByMonths(profile_id, num_of_months, engagement_type):
         END AS "HOUR_OF_POSTING", post.created_at::time, 
         EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
         LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=post.post_id) 
-        WHERE post.profile_id = %s AND post.created_at >= %s '''
+        WHERE post.is_deleted_by_instagram_user = False AND post.profile_id = %s AND post.created_at >= %s '''
     cursor = connection.cursor()
     try:
         cursor.execute(sql, [profile_id, last_month_date])
@@ -71,7 +71,7 @@ def saveEngagementFrequencyByMonths(profile_id, num_of_months, engagement_type):
     END AS "HOUR_OF_POSTING", post.created_at::time, 
     EXTRACT(DOW FROM post.created_at)::integer as dayOfWeek FROM public."analyticsApi_post" post 
     LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=post.post_id) 
-    WHERE post.profile_id = %s AND post.created_at >= %s '''
+    WHERE post.is_deleted_by_instagram_user = False AND post.profile_id = %s AND post.created_at >= %s '''
     cursor = connection.cursor()
     try:
         cursor.execute(sql, [profile_id, last_month_date])
