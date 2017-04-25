@@ -25,7 +25,8 @@ class PostListApi(generics.ListAPIView):
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
-        queryset = self.model.objects.filter(profile_id=profile_id)
+        queryset = self.model.objects.filter(
+            profile_id=profile_id, is_deleted_by_instagram_user=False)
         sort_type = self.request.query_params.get('sort', '-')
         if sort_type == 'ASC':
             sort_type = ''
@@ -76,7 +77,8 @@ class PostHistoryListApi(generics.ListAPIView):
 
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
-        queryset = self.model.objects.filter(profile_id=profile_id)
+        queryset = self.model.objects.filter(
+            profile_id=profile_id, is_deleted_by_instagram_user=False)
         return queryset.order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
@@ -129,11 +131,11 @@ class PostFilterUsageApi(generics.ListAPIView):
         if to_date:
             to_date = dateutil.parser.parse(to_date)
             queryset = queryset.filter(post_id__created_at__lte=to_date)
-            queryset = queryset.filter(post_id__created_at__lte=to_date)
 
         if filter:
             queryset = queryset.filter(post_id__primary_content_type=filter)
 
+        queryset = queryset.filter(post_id__is_deleted_by_instagram_user=False)
         queryset = queryset.values('name').annotate(
             count=Count('name')).order_by('-count')
         serialized = list(queryset)
@@ -166,11 +168,11 @@ class PostTagUsageApi(generics.ListAPIView):
         if to_date:
             to_date = dateutil.parser.parse(to_date)
             queryset = queryset.filter(post_id__created_at__lte=to_date)
-            queryset = queryset.filter(post_id__created_at__lte=to_date)
 
         if filter:
             queryset = queryset.filter(post_id__primary_content_type=filter)
 
+        queryset = queryset.filter(post_id__is_deleted_by_instagram_user=False)
         queryset = queryset.values('name').annotate(
             count=Count('name')).order_by('-count')
         serialized = list(queryset)
@@ -206,6 +208,7 @@ class PostGeolocationApi(generics.ListAPIView):
         if filter:
             queryset = queryset.filter(primary_content_type=filter)
 
+        queryset = queryset.filter(is_deleted_by_instagram_user=False)
         queryset = queryset.aggregate(
             with_geo=Sum(
                 Case(When(geo__isnull=False, then=1),
@@ -264,6 +267,7 @@ class PostTagRepartitionApi(generics.ListAPIView):
         if filter:
             queryset = queryset.filter(primary_content_type=filter)
 
+        queryset = queryset.filter(is_deleted_by_instagram_user=False)
         queryset = queryset.aggregate(
             with_tag=Sum(
                 Case(When(has_hashtag=True, then=1),
@@ -324,6 +328,7 @@ class PostDensityApi(generics.ListAPIView):
         if filter:
             queryset = queryset.filter(primary_content_type=filter)
 
+        queryset = queryset.filter(is_deleted_by_instagram_user=False)
         queryset = queryset.annotate(
             data=Extract('created_at', range_type)).values('data').annotate(count=Count('id')).values('data',
                                                                                                       'count').order_by(
@@ -360,6 +365,8 @@ class PostDistributionApi(generics.ListAPIView):
 
         if filter:
             queryset = queryset.filter(primary_content_type=filter)
+
+        queryset = queryset.filter(is_deleted_by_instagram_user=False)
 
         queryset = queryset.annotate(year=Extract('created_at', 'year'), month=Extract(
             'created_at', 'month')).values('year', 'month').annotate(Count('id'))
