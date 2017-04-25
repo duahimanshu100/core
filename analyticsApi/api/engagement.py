@@ -115,6 +115,7 @@ class PostMetricListApi(generics.ListAPIView):
 
         if filter:
             queryset = queryset.filter(post__primary_content_type=filter)
+        queryset = queryset.filter(post_id__is_deleted_by_instagram_user=False)
 
         queryset = queryset.aggregate(avg_like=Avg('like_count'),
                                       avg_comment=Avg('comment_count'),
@@ -137,7 +138,7 @@ class ProfileLikeHistoryApi(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
 
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, like_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, like_count FROM public."analyticsApi_postmetric"  pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
         if(self.request.query_params.get('limit', '')):
             sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
 
@@ -162,7 +163,7 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, comment_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, comment_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
         if(self.request.query_params.get('limit', '')):
             sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
         cursor = connection.cursor()
@@ -186,7 +187,7 @@ class ProfileEngagementHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (created_at::date, post_id_id) created_at, id, engagement_count FROM public."analyticsApi_postmetric" WHERE profile_id = %s ORDER BY created_at::date DESC, post_id_id, created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, engagement_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
         if(self.request.query_params.get('limit', '')):
             sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
         cursor = connection.cursor()
@@ -209,7 +210,7 @@ class RecentPostApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id).exclude(image_urls__isnull=True)
+            profile_id=profile_id).exclude(image_urls__isnull=True, is_deleted_by_instagram_user=False)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -253,7 +254,7 @@ class OperationPostApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id).exclude(post_id__image_urls__isnull=True)
+            profile_id=profile_id).exclude(post_id__image_urls__isnull=True, post_id__is_deleted_by_instagram_user=False)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -315,7 +316,7 @@ class FilterImpactCommentApi(generics.ListAPIView):
         LEFT JOIN public."analyticsApi_postlatestmetric" pm 
         ON (pm.post_id_id=pf.post_id_id) 
         LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id) 
-        WHERE pf.profile_id = %s ''' + sql_filter + ''' GROUP BY pf.name'''
+        WHERE post.is_deleted_by_instagram_user = False AND pf.profile_id = %s ''' + sql_filter + ''' GROUP BY pf.name'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -350,7 +351,7 @@ class FilterImpactLikeApi(generics.ListAPIView):
         SELECT pf.name, SUM(like_count) FROM public."analyticsApi_postfilter" pf
         LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=pf.post_id_id)
         LEFT JOIN public."analyticsApi_post" post ON (post.post_id=pf.post_id_id)
-        WHERE pf.profile_id = %s '''  + sql_filter +   ''' GROUP BY pf.name'''
+        WHERE post.is_deleted_by_instagram_user = False AND pf.profile_id = %s '''  + sql_filter +   ''' GROUP BY pf.name'''
         cursor = connection.cursor()
         try:
             cursor.execute(sql, [self.kwargs['profile_id']])
@@ -390,7 +391,7 @@ class HashtagPerformanceApi(generics.ListAPIView):
                 sql_filter = " AND post.primary_content_type = 'video' "
 
         sql = '''SELECT ph.name, SUM(pm.''' + operation + ''') as ''' + operation + \
-            ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=ph.post_id_id) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE ph.profile_id = %s ''' + \
+            ''' FROM public."analyticsApi_posthashtag" ph LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=ph.post_id_id) LEFT JOIN public."analyticsApi_post" post ON (post.post_id=ph.post_id_id) WHERE post.is_deleted_by_instagram_user = False AND ph.profile_id = %s ''' + \
             sql_filter + '''GROUP BY ph.name ORDER BY ''' + operation + ''' DESC'''
         cursor = connection.cursor()
         try:
@@ -416,7 +417,8 @@ class FilterEngagementPostApi(generics.ListAPIView):
         SELECT pf.name, cast(sum(pm.engagement_count) as integer) as s_e_c 
         FROM public."analyticsApi_postfilter" pf 
         LEFT JOIN public."analyticsApi_postlatestmetric" pm ON (pm.post_id_id=pf.post_id_id)
-        WHERE pf.profile_id = %s GROUP BY pf.name
+        LEFT JOIN public."analyticsApi_post" post ON (pm.post_id_id=post.post_id)
+        WHERE post.is_deleted_by_instagram_user = False AND pf.profile_id = %s GROUP BY pf.name
         ORDER BY s_e_C DESC
         '''
         cursor = connection.cursor()
