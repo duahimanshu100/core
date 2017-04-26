@@ -254,7 +254,7 @@ class OperationPostApi(generics.ListAPIView):
     def get_queryset(self):
         profile_id = self.kwargs['profile_id']
         queryset = self.model.objects.filter(
-            profile_id=profile_id).exclude(post_id__image_urls__isnull=True, post_id__is_deleted_by_instagram_user=False)
+            profile_id=profile_id).exclude(post_id__image_urls__isnull=True)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -286,6 +286,7 @@ class OperationPostApi(generics.ListAPIView):
         if filter:
             queryset = queryset.filter(post_id__primary_content_type=filter)
         order_by_type = '-' if type_of_recent == 'most' else ''
+        queryset = queryset.filter(post_id__is_deleted_by_instagram_user=False)
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
         serializer = PostWithLatestMetricSerializer(queryset, many=True)
         return Response(serializer.data)
