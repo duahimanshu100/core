@@ -112,6 +112,7 @@ class Post(models.Model):
     replies_count = models.BigIntegerField(default=0)
     shares_count = models.BigIntegerField(default=0)
     has_hashtag = models.BooleanField(default=False)
+    is_deleted_by_instagram_user = models.BooleanField(default=False)
     channel = models.CharField(
         max_length=200, default='instagram')
     url = models.CharField(max_length=500, null=True, blank=True)
@@ -166,7 +167,7 @@ class PostMetric(models.Model):
     share_count = models.BigIntegerField(default=0)
     engagement_count = models.BigIntegerField(default=0)
     dislike_count = models.BigIntegerField(default=0)
-    is_latest = models.BooleanField(default=False)
+    #is_latest = models.BooleanField(default=False)
     post_content_type = models.CharField(
         max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
