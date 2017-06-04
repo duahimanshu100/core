@@ -13,7 +13,7 @@ class SmToken(models.Model):
     TOKEN_CHOICES = (
         (1, "REFRESH"),
         (2, "API"))
-    token = models.CharField(max_length=1000)
+    token = models.CharField(max_length=2000)
     token_type = models.IntegerField(choices=TOKEN_CHOICES, default=1)
     is_active = models.BooleanField(default=True)
     sm_id = models.CharField(max_length=200, null=True, blank=True)
