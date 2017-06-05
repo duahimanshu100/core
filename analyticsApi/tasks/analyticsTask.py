@@ -418,7 +418,7 @@ def saveProfileCompleteMetricByProfile(profile_id):
 @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="cacheAllProfiles", ignore_result=True)
 def cacheAllProfiles():
     from analyticsApi.models import Profile
-    profiles = Profile.objects.all()[13:15]
+    profiles = Profile.objects.all()
     req_urls = []
     for profile in profiles:
         print(profile.profile_id)
