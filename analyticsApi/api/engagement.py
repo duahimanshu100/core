@@ -7,6 +7,7 @@ from analyticsApi.utility import Utility
 from analyticsApi.models import PostMetric, ProfileEngagementMetric, PostLatestMetric
 from django.db import connection
 from django.db.models import Max
+from django.core.cache import cache
 
 
 class FollowersGainedApi(generics.ListAPIView):
@@ -137,18 +138,26 @@ class ProfileLikeHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
+        else:
+            sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, like_count FROM public."analyticsApi_postmetric"  pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+            if(self.request.query_params.get('limit', '')):
+                sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
 
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.like_count) - lag(SUM(metric.like_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as like_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, like_count FROM public."analyticsApi_postmetric"  pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
-        if(self.request.query_params.get('limit', '')):
-            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
-
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            result = Utility.dictfetchall(cursor)
-            return Response(result)
-        finally:
-            cursor.close()
+            cursor = connection.cursor()
+            try:
+                cursor.execute(sql, [self.kwargs['profile_id']])
+                result = Utility.dictfetchall(cursor)
+                cache.set(cache_key, result, 24 * 60 * 60)
+                return Response(result)
+            finally:
+                cursor.close()
 
 
 class ProfileCommentHistoryApi(generics.ListAPIView):
@@ -163,16 +172,25 @@ class ProfileCommentHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, comment_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
-        if(self.request.query_params.get('limit', '')):
-            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            result = Utility.dictfetchall(cursor)
-            return Response(result)
-        finally:
-            cursor.close()
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
+        else:
+            sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.comment_count) - lag(SUM(metric.comment_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as comment_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, comment_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+            if(self.request.query_params.get('limit', '')):
+                sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
+            cursor = connection.cursor()
+            try:
+                cursor.execute(sql, [self.kwargs['profile_id']])
+                result = Utility.dictfetchall(cursor)
+                cache.set(cache_key, result, 24 * 60 * 60)
+                return Response(result)
+            finally:
+                cursor.close()
 
 
 class ProfileEngagementHistoryApi(generics.ListAPIView):
@@ -187,16 +205,25 @@ class ProfileEngagementHistoryApi(generics.ListAPIView):
         return []
 
     def list(self, request, *args, **kwargs):
-        sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, engagement_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
-        if(self.request.query_params.get('limit', '')):
-            sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
-        cursor = connection.cursor()
-        try:
-            cursor.execute(sql, [self.kwargs['profile_id']])
-            result = Utility.dictfetchall(cursor)
-            return Response(result)
-        finally:
-            cursor.close()
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
+        else:
+            sql = '''SELECT metric.created_at::date, CASE WHEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) > 0 THEN SUM(metric.engagement_count) - lag(SUM(metric.engagement_count)) OVER (ORDER BY metric.created_at::date ASC) ELSE 0 END as engagement_count FROM ( SELECT DISTINCT ON (pm.created_at::date, post_id_id) pm.created_at, pm.id, engagement_count FROM public."analyticsApi_postmetric" pm LEFT JOIN public."analyticsApi_post" post  ON (pm.post_id_id=post.post_id) WHERE post.is_deleted_by_instagram_user = False AND pm.profile_id = %s ORDER BY pm.created_at::date DESC, post_id_id, pm.created_at DESC) as metric GROUP BY metric.created_at::date ORDER BY created_at DESC'''
+            if(self.request.query_params.get('limit', '')):
+                sql = sql + ' LIMIT ' + self.request.query_params.get('limit')
+            cursor = connection.cursor()
+            try:
+                cursor.execute(sql, [self.kwargs['profile_id']])
+                result = Utility.dictfetchall(cursor)
+                cache.set(cache_key, result, 24 * 60 * 60)
+                return Response(result)
+            finally:
+                cursor.close()
 
 
 class RecentPostApi(generics.ListAPIView):

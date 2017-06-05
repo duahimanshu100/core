@@ -7,6 +7,7 @@ from django.db.models.functions import Extract
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from django.core.cache import cache
 
 
 class ResultsSetPagination(PageNumberPagination):
@@ -192,50 +193,58 @@ class PostGeolocationApi(generics.ListAPIView):
         return queryset.order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        # 2016-12-02T17:00:25.910711
-        from_date = self.request.query_params.get('from_date', None)
-        to_date = self.request.query_params.get('to_date', None)
-        filter = self.request.query_params.get('filter', None)
-
-        if from_date:
-            from_date = dateutil.parser.parse(from_date)
-            queryset = queryset.filter(created_at__gte=from_date)
-        if to_date:
-            to_date = dateutil.parser.parse(to_date)
-            queryset = queryset.filter(created_at__lte=to_date)
-
-        if filter:
-            queryset = queryset.filter(primary_content_type=filter)
-
-        queryset = queryset.filter(is_deleted_by_instagram_user=False)
-        queryset = queryset.aggregate(
-            with_geo=Sum(
-                Case(When(geo__isnull=False, then=1),
-                     output_field=IntegerField())
-            ),
-            without_geo=Sum(
-                Case(When(geo__isnull=True, then=1),
-                     output_field=IntegerField())
-            ))
-
-        if not queryset.get('with_geo', None):
-            queryset['with_geo'] = 0
-
-        if not queryset.get('without_geo', None):
-            queryset['without_geo'] = 0
-
-        queryset['total'] = queryset['with_geo'] + queryset['without_geo']
-        if queryset['total'] != 0:
-            queryset['without_geo_percent'] = round(
-                (queryset['without_geo'] / queryset['total']) * 100, 2)
-            queryset['with_geo_percent'] = round(
-                (queryset['with_geo'] / queryset['total']) * 100, 2)
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
         else:
-            queryset['without_geo_percent'] = 0
-            queryset['with_geo_percent'] = 0
+            queryset = self.get_queryset()
+            # 2016-12-02T17:00:25.910711
+            from_date = self.request.query_params.get('from_date', None)
+            to_date = self.request.query_params.get('to_date', None)
+            filter = self.request.query_params.get('filter', None)
 
-        return Response(queryset)
+            if from_date:
+                from_date = dateutil.parser.parse(from_date)
+                queryset = queryset.filter(created_at__gte=from_date)
+            if to_date:
+                to_date = dateutil.parser.parse(to_date)
+                queryset = queryset.filter(created_at__lte=to_date)
+
+            if filter:
+                queryset = queryset.filter(primary_content_type=filter)
+
+            queryset = queryset.filter(is_deleted_by_instagram_user=False)
+            queryset = queryset.aggregate(
+                with_geo=Sum(
+                    Case(When(geo__isnull=False, then=1),
+                         output_field=IntegerField())
+                ),
+                without_geo=Sum(
+                    Case(When(geo__isnull=True, then=1),
+                         output_field=IntegerField())
+                ))
+
+            if not queryset.get('with_geo', None):
+                queryset['with_geo'] = 0
+
+            if not queryset.get('without_geo', None):
+                queryset['without_geo'] = 0
+
+            queryset['total'] = queryset['with_geo'] + queryset['without_geo']
+            if queryset['total'] != 0:
+                queryset['without_geo_percent'] = round(
+                    (queryset['without_geo'] / queryset['total']) * 100, 2)
+                queryset['with_geo_percent'] = round(
+                    (queryset['with_geo'] / queryset['total']) * 100, 2)
+            else:
+                queryset['without_geo_percent'] = 0
+                queryset['with_geo_percent'] = 0
+            cache.set(cache_key, queryset, 24 * 60 * 60)
+            return Response(queryset)
 
 
 class PostTagRepartitionApi(generics.ListAPIView):
@@ -251,49 +260,57 @@ class PostTagRepartitionApi(generics.ListAPIView):
         return queryset.order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        # 2016-12-02T17:00:25.910711
-        from_date = self.request.query_params.get('from_date', None)
-        to_date = self.request.query_params.get('to_date', None)
-        filter = self.request.query_params.get('filter', None)
-
-        if from_date:
-            from_date = dateutil.parser.parse(from_date)
-            queryset = queryset.filter(created_at__gte=from_date)
-        if to_date:
-            to_date = dateutil.parser.parse(to_date)
-            queryset = queryset.filter(created_at__lte=to_date)
-
-        if filter:
-            queryset = queryset.filter(primary_content_type=filter)
-
-        queryset = queryset.filter(is_deleted_by_instagram_user=False)
-        queryset = queryset.aggregate(
-            with_tag=Sum(
-                Case(When(has_hashtag=True, then=1),
-                     output_field=IntegerField())
-            ),
-            without_tag=Sum(
-                Case(When(has_hashtag=False, then=1),
-                     output_field=IntegerField())
-            ))
-
-        if not queryset.get('with_tag', None):
-            queryset['with_tag'] = 0
-
-        if not queryset.get('without_tag', None):
-            queryset['without_tag'] = 0
-
-        queryset['total'] = queryset['with_tag'] + queryset['without_tag']
-        if queryset['total'] != 0:
-            queryset['without_tag_percent'] = round(
-                (queryset['without_tag'] / queryset['total']) * 100, 2)
-            queryset['with_tag_percent'] = round(
-                (queryset['with_tag'] / queryset['total']) * 100, 2)
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
         else:
-            queryset['without_tag_percent'] = 0
-            queryset['with_tag_percent'] = 0
+            queryset = self.get_queryset()
+            # 2016-12-02T17:00:25.910711
+            from_date = self.request.query_params.get('from_date', None)
+            to_date = self.request.query_params.get('to_date', None)
+            filter = self.request.query_params.get('filter', None)
 
+            if from_date:
+                from_date = dateutil.parser.parse(from_date)
+                queryset = queryset.filter(created_at__gte=from_date)
+            if to_date:
+                to_date = dateutil.parser.parse(to_date)
+                queryset = queryset.filter(created_at__lte=to_date)
+
+            if filter:
+                queryset = queryset.filter(primary_content_type=filter)
+
+            queryset = queryset.filter(is_deleted_by_instagram_user=False)
+            queryset = queryset.aggregate(
+                with_tag=Sum(
+                    Case(When(has_hashtag=True, then=1),
+                         output_field=IntegerField())
+                ),
+                without_tag=Sum(
+                    Case(When(has_hashtag=False, then=1),
+                         output_field=IntegerField())
+                ))
+
+            if not queryset.get('with_tag', None):
+                queryset['with_tag'] = 0
+
+            if not queryset.get('without_tag', None):
+                queryset['without_tag'] = 0
+
+            queryset['total'] = queryset['with_tag'] + queryset['without_tag']
+            if queryset['total'] != 0:
+                queryset['without_tag_percent'] = round(
+                    (queryset['without_tag'] / queryset['total']) * 100, 2)
+                queryset['with_tag_percent'] = round(
+                    (queryset['with_tag'] / queryset['total']) * 100, 2)
+            else:
+                queryset['without_tag_percent'] = 0
+                queryset['with_tag_percent'] = 0
+        cache.set(cache_key, queryset, 24 * 60 * 60)
         return Response(queryset)
 
 
@@ -311,28 +328,37 @@ class PostDensityApi(generics.ListAPIView):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        # 2016-12-02T17:00:25.910711
-        from_date = self.request.query_params.get('from_date', None)
-        to_date = self.request.query_params.get('to_date', None)
-        filter = self.request.query_params.get('filter', None)
-        range_type = self.request.query_params.get('range_type', 'week_day')
+        cache_key = request.get_full_path()
+        force_cache = request.GET.get('cache', False)
+        returnRespone = cache.get(cache_key)
+        if force_cache:
+            cache_key = cache_key.replace(' ', '')[:-8]
+        if not force_cache and returnRespone is not None:
+            return Response(returnRespone)
+        else:
+            queryset = self.get_queryset()
+            # 2016-12-02T17:00:25.910711
+            from_date = self.request.query_params.get('from_date', None)
+            to_date = self.request.query_params.get('to_date', None)
+            filter = self.request.query_params.get('filter', None)
+            range_type = self.request.query_params.get('range_type', 'week_day')
 
-        if from_date:
-            from_date = dateutil.parser.parse(from_date)
-            queryset = queryset.filter(created_at__gte=from_date)
-        if to_date:
-            to_date = dateutil.parser.parse(to_date)
-            queryset = queryset.filter(created_at__lte=to_date)
+            if from_date:
+                from_date = dateutil.parser.parse(from_date)
+                queryset = queryset.filter(created_at__gte=from_date)
+            if to_date:
+                to_date = dateutil.parser.parse(to_date)
+                queryset = queryset.filter(created_at__lte=to_date)
 
-        if filter:
-            queryset = queryset.filter(primary_content_type=filter)
+            if filter:
+                queryset = queryset.filter(primary_content_type=filter)
 
-        queryset = queryset.filter(is_deleted_by_instagram_user=False)
-        queryset = queryset.annotate(
-            data=Extract('created_at', range_type)).values('data').annotate(count=Count('id')).values('data',
-                                                                                                      'count').order_by(
-            'data')
+            queryset = queryset.filter(is_deleted_by_instagram_user=False)
+            queryset = queryset.annotate(
+                data=Extract('created_at', range_type)).values('data').annotate(count=Count('id')).values('data',
+                                                                                                          'count').order_by(
+                'data')
+        cache.set(cache_key, queryset, 24 * 60 * 60)
         return Response(queryset)
 
 

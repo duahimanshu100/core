@@ -13,6 +13,7 @@ from analytics.celery import app
 from django.db import connection
 import json
 from django.core.mail import EmailMessage
+import grequests
 
 
 def syncProfiles(is_hourly=False):
@@ -412,3 +413,41 @@ def saveProfileCompleteMetricByProfile(profile_id):
     profile_engagement_metric.json_response = result
     profile_engagement_metric.engagement_type = 3
     profile_engagement_metric.save()
+
+
+@periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="cacheAllProfiles", ignore_result=True)
+def cacheAllProfiles():
+    from analyticsApi.models import Profile
+    profiles = Profile.objects.all()[13:15]
+    req_urls = []
+    for profile in profiles:
+        print(profile.profile_id)
+        urls = cacheForSingleProfile(profile.profile_id)
+        req_urls = urls + req_urls
+    rs = (grequests.get(u) for u in req_urls)
+    grequests.map(rs)
+
+
+def cacheForSingleProfile(profile_id):
+    print("INTO THE CACHE FOR %s PROFILE" % (profile_id))
+    BASE_URL = 'https://apis.poletusengineering.com'
+    BASE_URL = 'http://127.0.0.1:8000'
+    urls = [
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) +
+        '/Posts/engagement/ProfileLikeHistory?limit=7&format=json&cache=1',
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) +
+        '/Posts/engagement/ProfileEngagementHistory?limit=7&format=json&cache=1',
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) + '/Posts/PostGeolocation&format=json&cache=1',
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) + '/Posts/PostTagRepartition&format=json&cache=1',
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) + '/Posts/PostDensity&format=json&cache=1',
+        BASE_URL + '/analytics/api/' +
+        str(profile_id) +
+        '/Posts/engagement/ProfileCommentHistory?limit=7&format=json&cache=1',
+    ]
+    print(urls)
+    return urls
