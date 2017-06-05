@@ -448,14 +448,14 @@ def cacheForSingleProfile(profile_id):
         str(profile_id) +
         '/Posts/engagement/ProfileEngagementHistory?limit=7&format=json&cache=1',
         BASE_URL + '/analytics/api/' +
-        str(profile_id) + '/Posts/PostGeolocation&format=json&cache=1',
+        str(profile_id) + '/Posts/PostGeolocation?format=json&cache=1',
         BASE_URL + '/analytics/api/' +
-        str(profile_id) + '/Posts/PostTagRepartition&format=json&cache=1',
+        str(profile_id) + '/Posts/PostTagRepartition?format=json&cache=1',
         BASE_URL + '/analytics/api/' +
-        str(profile_id) + '/Posts/PostDensity&format=json&cache=1',
+        str(profile_id) + '/Posts/PostDensity?format=json&cache=1',
         BASE_URL + '/analytics/api/' +
         str(profile_id) +
-        '/Posts/engagement/ProfileCommentHistory?limit=7&format=json&cache=1',
+        '/Posts/engagement/ProfileCommentHistory?limit=7?format=json&cache=1',
     ]
     print(urls)
     return urls
