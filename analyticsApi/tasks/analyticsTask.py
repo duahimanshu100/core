@@ -13,7 +13,7 @@ from analytics.celery import app
 from django.db import connection
 import json
 from django.core.mail import EmailMessage
-import grequests
+import requests
 
 
 def syncProfiles(is_hourly=False):
@@ -424,8 +424,8 @@ def cacheAllProfiles():
         print(profile.profile_id)
         urls = cacheForSingleProfile(profile.profile_id)
         req_urls = urls + req_urls
-    rs = (grequests.get(u) for u in req_urls)
-    grequests.map(rs)
+    (requests.get(u) for u in req_urls)
+    # grequests.map(rs)
 
 
 def cacheForSingleProfile(profile_id):
