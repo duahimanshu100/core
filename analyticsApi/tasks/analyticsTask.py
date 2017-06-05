@@ -432,6 +432,7 @@ def cacheForSingleProfile(profile_id):
     print("INTO THE CACHE FOR %s PROFILE" % (profile_id))
     BASE_URL = 'https://apis.poletusengineering.com'
     BASE_URL = 'http://127.0.0.1:8000'
+    BASE_URL = 'http://13.58.148.48'
     urls = [
         BASE_URL + '/analytics/api/' +
         str(profile_id) +
