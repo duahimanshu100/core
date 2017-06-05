@@ -424,8 +424,14 @@ def cacheAllProfiles():
         print(profile.profile_id)
         urls = cacheForSingleProfile(profile.profile_id)
         req_urls = urls + req_urls
-    result = [requests.get(u) for u in req_urls]
-    print(result)
+    for u in req_urls:
+        print('--------------------------------------')
+        print(u)
+        resp = requests.get(u)
+        print(resp)
+        print('--------------------------------------')
+    # result = [requests.get(u) for u in req_urls]
+    # print(result)
     # grequests.map(rs)
 
 
