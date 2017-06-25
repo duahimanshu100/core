@@ -1,7 +1,7 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post, ProfileEngagementMetric
+from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post, ProfileEngagementMetric, PostMetricTemp
 from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer, ProfileMetricSerializer
 from analyticsApi.simplyMeasured.api.analytics.analytics import ApiAnalytics
 from analyticsApi.utility import Utility
@@ -210,7 +210,17 @@ def exportToFile():
         print('Exception while inserting into posttemp')
     print('Importing Ends at ' +
           str(datetime.now()))
+    deleteDataFromPostTemp.apply_async()
     os.unlink(file_path)
+
+
+@app.task
+def deleteDataFromPostTemp():
+    print("Deleting the data")
+    import datetime as DT
+    today = DT.date.today()
+    week_ago = today - DT.timedelta(days=8)
+    PostMetricTemp.objects.filter(created_at__lt = week_ago).delete()
 
 
 @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
