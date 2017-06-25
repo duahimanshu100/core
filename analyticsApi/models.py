@@ -156,6 +156,44 @@ class PostLatestMetric(models.Model):
         return str(self.post_id)
 
 
+class PostMetricTemp(models.Model):
+    '''
+    Simply Measured PostMetricTemp
+    '''
+    profile_id = models.CharField(max_length=200)
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    like_count = models.BigIntegerField(default=0)
+    comment_count = models.BigIntegerField(default=0)
+    share_count = models.BigIntegerField(default=0)
+    engagement_count = models.BigIntegerField(default=0)
+    dislike_count = models.BigIntegerField(default=0)
+    post_content_type = models.CharField(
+        max_length=200, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.post_id)
+
+
+class PostMetricInterim(models.Model):
+    '''
+    Simply Measured PostMetricInterim
+    '''
+    profile_id = models.CharField(max_length=200)
+    post_id = models.ForeignKey(Post, to_field='post_id')
+    like_count = models.BigIntegerField(default=0)
+    comment_count = models.BigIntegerField(default=0)
+    share_count = models.BigIntegerField(default=0)
+    engagement_count = models.BigIntegerField(default=0)
+    dislike_count = models.BigIntegerField(default=0)
+    post_content_type = models.CharField(
+        max_length=200, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.post_id)
+
+
 class PostMetric(models.Model):
     '''
     Simply Measured Post Hashtags

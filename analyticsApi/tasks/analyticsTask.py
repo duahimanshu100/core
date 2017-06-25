@@ -202,6 +202,14 @@ def exportToFile():
                                                                               'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
     print('Importing Ends at ' +
           str(datetime.now()))
+    try:
+        f = open(file_path, 'r')
+        cursor.copy_from(f, 'public."analyticsApi_postmetrictemp"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
+                                                                              'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    except:
+        print('Exception while inserting into posttemp')
+    print('Importing Ends at ' +
+          str(datetime.now()))
     os.unlink(file_path)
 
 
