@@ -135,8 +135,8 @@ def markInactivePosts():
     counter = 0
     for i in range(0, count, chunk_size):
         proxy_obj = {
-            'http': 'http://enginepole9504:zykmvdjs7r@' + lst_of_proxies[counter%(len(lst_of_proxies) - 1)],
-            'https': 'https://enginepole9504:zykmvdjs7r@'+ lst_of_proxies[counter%(len(lst_of_proxies) - 1)],
+            'http': 'http://enginepole9504:zykmvdjs7r@' + random.choice(lst_of_proxies),
+            'https': 'https://enginepole9504:zykmvdjs7r@'+ random.choice(lst_of_proxies),
         }
         posts = Post.objects.filter(
             image_urls__isnull=False, is_deleted_by_instagram_user=False).order_by('-id').values_list('post_id', 'image_urls')[i:i + chunk_size]
@@ -201,6 +201,14 @@ def exportToFile():
     f = open(file_path, 'r')
     cursor.copy_from(f, 'public."analyticsApi_postmetric"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
                                                                               'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    print('Importing Ends at ' +
+          str(datetime.now()))
+    try:
+        f = open(file_path, 'r')
+        cursor.copy_from(f, 'public."analyticsApi_postmetrictemp"', sep="|", columns=('profile_id', 'like_count', 'comment_count',
+                                                                              'share_count', 'engagement_count', 'dislike_count', 'post_content_type', 'created_at', 'post_id_id'))
+    except:
+        print('Exception while inserting into posttemp')
     print('Importing Ends at ' +
           str(datetime.now()))
     os.unlink(file_path)
