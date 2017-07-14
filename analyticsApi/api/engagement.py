@@ -260,9 +260,12 @@ class RecentPostApi(generics.ListAPIView):
             queryset = queryset.filter(primary_content_type=filter)
 
         order_by_type = '-' if type_of_recent == 'most' else ''
+        # queryset = queryset.distinct('post_id')
+        # queryset = queryset.order_by('post_id')
+        # queryset = queryset.order_by('post_id' , order_by_type + 'created_at')[:limit_by]
         queryset = queryset.order_by(order_by_type + 'created_at')[:limit_by]
         post_metrics = PostLatestMetric.objects.filter(
-            post_id__in=queryset)
+            post_id__in=queryset).distinct('post_id')
         serializer = PostWithLatestMetricSerializer(post_metrics, many=True)
         if order_by_type:
             return Response(reversed(sorted(serializer.data, key=lambda x: x['post_id']['created_at'])))
@@ -314,6 +317,7 @@ class OperationPostApi(generics.ListAPIView):
             queryset = queryset.filter(post_id__primary_content_type=filter)
         order_by_type = '-' if type_of_recent == 'most' else ''
         queryset = queryset.filter(post_id__is_deleted_by_instagram_user=False)
+        queryset = queryset.distinct('post_id', operation)
         queryset = queryset.order_by(order_by_type + operation)[:limit_by]
         serializer = PostWithLatestMetricSerializer(queryset, many=True)
         return Response(serializer.data)
