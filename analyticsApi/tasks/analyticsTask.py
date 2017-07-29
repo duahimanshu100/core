@@ -1,7 +1,7 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post, ProfileEngagementMetric, PostMetricTemp
+from analyticsApi.models import Profile, SmAccount, ProfileLike, ProfileMetric, PostVision, Post, ProfileEngagementMetric, PostMetricTemp , PostMetric
 from analyticsApi.serializers import ProfileSerializer, PostSerializer, ProfileLikeSerializer, ProfileMetricSerializer
 from analyticsApi.simplyMeasured.api.analytics.analytics import ApiAnalytics
 from analyticsApi.utility import Utility
@@ -223,6 +223,26 @@ def deleteDataFromPostTemp():
     week_ago = today - DT.timedelta(days=8)
     PostMetricTemp.objects.filter(created_at__lt = week_ago).delete()
 
+def deleteDataFromPostMetric():
+    print("Deleting the data")
+    import datetime as DT
+    today = DT.date.today()
+    month_ago = today - DT.timedelta(days=31)
+    PostMetric.objects.filter(created_at__lt = month_ago).delete()
+
+def CopyDataFromPostMetricToPostMetricAll():
+    import datetime as DT
+    today = DT.date.today()
+    month_ago = today - DT.timedelta(days=31)
+    month_ago = month_ago.strftime('%Y-%m-%d %H:%M')
+    cursor = connection.cursor()
+    print('Exporting Ends at ' +
+          str(datetime.now()))
+    sql = '''INSERT INTO public."analyticsApi_postmetric_all_data" SELECT * FROM public."analyticsApi_postmetric" where created_at<=%s'''
+    cursor.execute(sql,[month_ago])
+    print('Importing Starts at ' +
+          str(datetime.now()))
+    deleteDataFromPostMetric()
 
 @periodic_task(run_every=(crontab(minute=0, hour='*/1')), name="syncAllProfileAndPost", ignore_result=True)
 def syncAllProfileAndPost():
@@ -230,8 +250,9 @@ def syncAllProfileAndPost():
     syncProfiles(is_hourly=True)
     syncAllProfilesPost()
     email = EmailMessage('syncAllProfileAndPost at (' + str(datetime.now()) + ')',
-                         'syncAllProfileAndPost', to=['himanshu@poletus.com', 'niles@poletus.com', 'engineering@poletus.com'])
+                         'syncAllProfileAndPost', to=['himanshu@poletus.com', 'niles@poletus.com', 'engineering@poletus.com','karthik@bicsglobal.com','rajesh@thylaksoft.com'])
     email.send()
+    CopyDataFromPostMetricToPostMetricAll()
 
 
 @periodic_task(run_every=(crontab(minute='*/5')), name="syncAudienceCount", ignore_result=True)
